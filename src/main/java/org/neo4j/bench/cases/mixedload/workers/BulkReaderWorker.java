@@ -45,7 +45,7 @@ public class BulkReaderWorker implements Callable<int[]>
     public int[] call() throws Exception
     {
         long time = System.currentTimeMillis();
-        for (int i = 0; i < 10; i++)
+        for ( int i = 0; i < 10; i++ )
         {
             for ( Node node : graphDb.getAllNodes() )
             {
@@ -53,13 +53,13 @@ public class BulkReaderWorker implements Callable<int[]>
                 for ( Relationship r : node.getRelationships() )
                 {
                     reads += 1;
-                    for (String propertyKey : r.getPropertyKeys())
+                    for ( String propertyKey : r.getPropertyKeys() )
                     {
                         r.getProperty( propertyKey );
                         reads += 2; // Prop key and prop value
                     }
                 }
-                for (String propertyKey : node.getPropertyKeys())
+                for ( String propertyKey : node.getPropertyKeys() )
                 {
                     node.getProperty( propertyKey );
                     reads += 2; // Prop key and prop value
@@ -70,7 +70,7 @@ public class BulkReaderWorker implements Callable<int[]>
         int[] result = new int[3];
         result[0] = reads;
         result[1] = writes;
-        result[2] = (int) (System.currentTimeMillis() - time);
+        result[2] = (int) ( System.currentTimeMillis() - time );
         return result;
     }
 }

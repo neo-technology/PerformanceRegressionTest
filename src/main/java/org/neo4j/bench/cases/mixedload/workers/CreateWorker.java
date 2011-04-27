@@ -44,7 +44,8 @@ public class CreateWorker implements Callable<int[]>
     private int reads;
     private int writes;
 
-    public CreateWorker( GraphDatabaseService graphDb, Queue<Node> nodes, int ops )
+    public CreateWorker( GraphDatabaseService graphDb, Queue<Node> nodes,
+            int ops )
     {
         this.graphDb = graphDb;
         this.nodes = nodes;
@@ -87,7 +88,7 @@ public class CreateWorker implements Callable<int[]>
         int[] result = new int[3];
         result[0] = reads;
         result[1] = writes;
-        result[2] = (int) (System.currentTimeMillis() - time);
+        result[2] = (int) ( System.currentTimeMillis() - time );
         return result;
     }
 

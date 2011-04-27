@@ -22,9 +22,14 @@ package org.neo4j.bench.cases.mixedload;
 import java.io.PrintStream;
 import java.util.StringTokenizer;
 
+/**
+ * In memory representation of a set of statistics from a bench run. Comparable
+ * with its kind for sorting purposes and performance degradation detection.
+ * Provides methods for reading in and writing out from/to file.
+ */
 public class Stats implements Comparable<Stats>
 {
-    private String name;
+    private final String name;
     private double avgReadsPerSec;
     private double avgWritePerSec;
     private double peakReadsPerSec;

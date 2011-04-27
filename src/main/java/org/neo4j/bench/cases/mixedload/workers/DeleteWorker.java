@@ -83,7 +83,7 @@ public class DeleteWorker implements Callable<int[]>
         int[] result = new int[3];
         result[0] = reads;
         result[1] = writes;
-        result[2] = (int) (System.currentTimeMillis() - time);
+        result[2] = (int) ( System.currentTimeMillis() - time );
         return result;
     }
 

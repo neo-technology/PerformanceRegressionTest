@@ -43,9 +43,6 @@ import org.neo4j.graphdb.Node;
  * The main driver for the operation performer threads. Keeps the probabilities
  * with which each thread type is launched and aggregates the results of their
  * runs.
- *
- * @author <a href=mailto:chris.gioran@neotechnology.com> Chris Gioran </a>
- *
  */
 public class MixedLoadBenchCase
 {
@@ -159,6 +156,7 @@ public class MixedLoadBenchCase
                 e.printStackTrace();
             }
         }
+        service.shutdown();
         try
         {
             getAll();
@@ -171,10 +169,9 @@ public class MixedLoadBenchCase
         System.out.println( "Run for "
                             + ( System.currentTimeMillis() - startTime )
                             / 60000 + " minutes" );
-        service.shutdown();
     }
-    
-    private void printOutResults(String header)
+
+    private void printOutResults( String header )
     {
         System.out.println( header );
         System.out.println( "Total time (ms): " + totalTime );
@@ -218,17 +215,20 @@ public class MixedLoadBenchCase
                                        / ( taskRes[2] == 0 ? 1 : taskRes[2] );
                     double thisWrites = taskRes[1]
                                         / ( taskRes[2] == 0 ? 1 : taskRes[2] );
-                    // Sustained operations must be at least as long as half the average runtime
-                    if ( type == WorkerType.BULK && taskRes[2] > totalTime*0.5/tasksExecuted )
+                    // Sustained operations must be at least as long as half the
+                    // average runtime
+                    if ( type == WorkerType.BULK
+                         && taskRes[2] > totalTime * 0.5 / tasksExecuted )
                     {
                         if ( thisReads > sustainedReads )
                             sustainedReads = thisReads;
                         if ( thisWrites > sustainedWrites )
                             sustainedWrites = thisWrites;
                     }
-                    // The test run for more than 10% of the average time, long enough for
+                    // The test run for more than 10% of the average time, long
+                    // enough for
                     // getting a peak value
-                    if ( taskRes[2] > totalTime*0.1/tasksExecuted )
+                    if ( taskRes[2] > totalTime * 0.1 / tasksExecuted )
                     {
                         if ( thisReads > peakReads ) peakReads = thisReads;
                         if ( thisWrites > peakWrites ) peakWrites = thisWrites;
