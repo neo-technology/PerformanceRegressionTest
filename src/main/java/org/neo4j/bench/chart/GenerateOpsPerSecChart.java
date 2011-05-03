@@ -25,30 +25,39 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartUtilities;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.axis.CategoryAxis;
+import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.labels.ItemLabelAnchor;
+import org.jfree.chart.labels.ItemLabelPosition;
+import org.jfree.chart.labels.StandardCategoryItemLabelGenerator;
+import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.renderer.category.BarRenderer3D;
 import org.jfree.data.category.DefaultCategoryDataset;
+import org.jfree.ui.TextAnchor;
 import org.neo4j.bench.cases.mixedload.Stats;
 
 public class GenerateOpsPerSecChart
 {
-    private static final int TESTS_TO_DRAW = 10;
+    private static final int TESTS_TO_DRAW = 7;
     public static final String OPS_PER_SECOND_FILE_ARG = "ops-per-sec-file";
     public static final String CHART_FILE_ARG = "chart-file";
 
-    private String inputFilename;
-    private String outputFilename;
+    private final String inputFilename;
+    private final String outputFilename;
     private boolean alarm;
-    private SortedSet<Stats> data;
+    private final SortedSet<Stats> data;
     private Set<Stats> dataToDraw;
-    private double threshold;
+    private final double threshold;
+    private double maxAvg;
 
     public GenerateOpsPerSecChart( String inputFilename, String outputFilename,
             double threshold )
@@ -70,7 +79,7 @@ public class GenerateOpsPerSecChart
             {
                 it.next();
             }
-            dataToDraw = data.tailSet(  it.next() );
+            dataToDraw = data.tailSet( it.next() );
         }
         else
         {
@@ -101,9 +110,39 @@ public class GenerateOpsPerSecChart
     private void generateChart() throws Exception
     {
         DefaultCategoryDataset dataset = generateDataset();
-        JFreeChart chart = ChartFactory.createBarChart( "Performance chart",
-                "Bench case", "Operations per sec", dataset,
-                PlotOrientation.VERTICAL, true, true, false );
+
+        BarRenderer3D barRenderer = new BarRenderer3D();
+        barRenderer.setBaseItemLabelsVisible( true );
+        barRenderer.setBaseItemLabelGenerator( new StandardCategoryItemLabelGenerator(
+                "{2}", new DecimalFormat( "###.#" ) ) );
+        barRenderer.setBasePositiveItemLabelPosition( new ItemLabelPosition(
+                ItemLabelAnchor.OUTSIDE12, TextAnchor.TOP_CENTER ) );
+        barRenderer.setItemMargin( 0.06 );
+
+        CategoryAxis catAxis = new CategoryAxis( "Bench Case" );
+
+        CategoryPlot basePlot = new CategoryPlot( dataset, catAxis,
+                new NumberAxis(
+                "Operations Per Sec" ), barRenderer );
+        basePlot.setOrientation( PlotOrientation.VERTICAL );
+        basePlot.setDataset( dataset );
+        basePlot.getRangeAxis().setLowerBound( 0 );
+        basePlot.getRangeAxis().setUpperBound( maxAvg );
+
+        // CategoryPlot topPlot = new CategoryPlot( dataset, null,
+        // new NumberAxis( "Operations Per Sec" ), barRenderer );
+        // topPlot.setOrientation( PlotOrientation.VERTICAL );
+        // topPlot.setDataset( dataset );
+        // topPlot.getRangeAxis().setLowerBound( 40 );
+        // topPlot.getRangeAxis().setUpperBound( 100 );
+
+        // CombinedDomainCategoryPlot combinedPlot = new
+        // CombinedDomainCategoryPlot(
+        // catAxis );
+        // combinedPlot.add( topPlot, 1 );
+        // combinedPlot.add( basePlot, 4 );
+
+        JFreeChart chart = new JFreeChart( "Performance Chart", basePlot );
 
         Dimension dimensions = new Dimension( 1600, 900 );
         File chartFile = new File( outputFilename );
@@ -118,16 +157,27 @@ public class GenerateOpsPerSecChart
     private DefaultCategoryDataset generateDataset()
     {
         DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-        
+        double currentMax = Double.MIN_VALUE;
+
         for ( Stats key : dataToDraw )
         {
             dataset.addValue( key.getAvgReadsPerSec(), "reads", key.getName() );
-            dataset.addValue( key.getAvgWritePerSec(), "writes", key.getName() );
-            dataset.addValue( key.getPeakReadsPerSec()/100, "peak reads", key.getName() );
-            dataset.addValue( key.getPeakWritesPerSec()/100, "peak writes", key.getName() );
-            dataset.addValue( key.getSustainedReadsPerSec()/100, "sust reads", key.getName() );
-            dataset.addValue( key.getSustainedWritesPerSec()/100, "sust writes", key.getName() );
+            if ( key.getAvgReadsPerSec() > currentMax )
+            {
+                currentMax = key.getAvgReadsPerSec();
+            }
+            dataset.addValue( key.getAvgWritePerSec(), "writes",
+                    key.getName() );
+            dataset.addValue( key.getPeakReadsPerSec(), "peak reads",
+                    key.getName() );
+            dataset.addValue( key.getPeakWritesPerSec(), "peak writes",
+                    key.getName() );
+            dataset.addValue( key.getSustainedReadsPerSec(), "sust reads",
+                    key.getName() );
+            dataset.addValue( key.getSustainedWritesPerSec(), "sust writes",
+                    key.getName() );
         }
+        this.maxAvg = currentMax;
         return dataset;
     }
 

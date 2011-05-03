@@ -46,7 +46,8 @@ public class PropertyAddWorker implements Callable<int[]>
     private int reads;
     private int writes;
 
-    public PropertyAddWorker( GraphDatabaseService graphDb, Queue<Node> nodes, int ops )
+    public PropertyAddWorker( GraphDatabaseService graphDb, Queue<Node> nodes,
+            int ops )
     {
         this.graphDb = graphDb;
         this.nodes = nodes;
@@ -72,7 +73,7 @@ public class PropertyAddWorker implements Callable<int[]>
                 }
                 else
                 {
-//                    addPropertyToRelationship();
+                    // addPropertyToRelationship();
                 }
                 tx.success();
             }
@@ -89,7 +90,7 @@ public class PropertyAddWorker implements Callable<int[]>
         int[] result = new int[3];
         result[0] = reads;
         result[1] = writes;
-        result[2] = (int) (System.currentTimeMillis() - time);
+        result[2] = (int) ( System.currentTimeMillis() - time );
         return result;
     }
 
@@ -131,7 +132,7 @@ public class PropertyAddWorker implements Callable<int[]>
          */
         while ( offset-- > 0 || !temp.hasRelationship() )
         {
-            if (!temp.hasRelationship()) continue;
+            if ( !temp.hasRelationship() ) continue;
             Relationship rel = temp.getRelationships().iterator().next();
             if ( createNew && propToAdd == null
                  && rel.getPropertyKeys().iterator().hasNext() )
@@ -144,7 +145,7 @@ public class PropertyAddWorker implements Callable<int[]>
             temp = nodes.remove();
         }
         // temp now holds a node that will do
-        if (propToAdd == null)
+        if ( propToAdd == null )
         {
             propToAdd = getRandomPropertyName();
         }
@@ -157,11 +158,12 @@ public class PropertyAddWorker implements Callable<int[]>
          *  exception. OK?
          */
         List<Relationship> thisNodesRels = new LinkedList<Relationship>();
-        for (Relationship rel : temp.getRelationships())
+        for ( Relationship rel : temp.getRelationships() )
         {
             thisNodesRels.add( rel );
         }
-        thisNodesRels.get( r.nextInt(thisNodesRels.size()) ).setProperty( propToAdd, getRandomPropertyValue() );
+        thisNodesRels.get( r.nextInt( thisNodesRels.size() ) ).setProperty(
+                propToAdd, getRandomPropertyValue() );
     }
 
     private String getRandomPropertyName()
@@ -189,7 +191,7 @@ public class PropertyAddWorker implements Callable<int[]>
 
     private String getRandomString( int length )
     {
-        StringBuffer acc = new StringBuffer("");
+        StringBuffer acc = new StringBuffer( "" );
         int i = 0;
         while ( i++ < length )
         {

@@ -46,7 +46,8 @@ public class BulkCreateWorker implements Callable<int[]>
     private int reads;
     private int writes;
 
-    public BulkCreateWorker( GraphDatabaseService graphDb, Queue<Node> nodes, int ops )
+    public BulkCreateWorker( GraphDatabaseService graphDb, Queue<Node> nodes,
+            int ops )
     {
         this.graphDb = graphDb;
         this.nodes = nodes;
@@ -92,7 +93,7 @@ public class BulkCreateWorker implements Callable<int[]>
         }
         result[0] = reads;
         result[1] = writes;
-        result[2] = (int) (System.currentTimeMillis() - time);
+        result[2] = (int) ( System.currentTimeMillis() - time );
         nodes.addAll( myNodes );
         return result;
     }

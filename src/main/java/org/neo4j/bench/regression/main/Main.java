@@ -23,25 +23,49 @@ import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.neo4j.bench.cases.mixedload.MixedLoadBenchCase;
 import org.neo4j.bench.cases.mixedload.Stats;
 import org.neo4j.bench.chart.GenerateOpsPerSecChart;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.helpers.Args;
+import org.neo4j.kernel.Config;
 import org.neo4j.kernel.EmbeddedGraphDatabase;
 
-@SuppressWarnings( "restriction" )
+/* @SuppressWarnings( "restriction" ) // for the signal */
 public class Main
 {
     public static void main( String[] args ) throws Exception
     {
         Args argz = new Args( args );
-        long timeToRun = Long.parseLong( argz.get( "time-to-run", "120" ) ); // Time
-                                                                           // in
-                                                                           // minutes
+        long timeToRun = Long.parseLong( argz.get( "time-to-run", "120" ) ); /* Time in minutes */
+        Map<String, String> props = new HashMap<String, String>();
+        props.put( Config.USE_MEMORY_MAPPED_BUFFERS, "true" );
         final GraphDatabaseService db = new EmbeddedGraphDatabase( "db" );
         final MixedLoadBenchCase myCase = new MixedLoadBenchCase( timeToRun );
+
+        /*
+         * Commented out because it breaks windows but it is nice to have for
+         * testing on real OSes
+        SignalHandler handler = new SignalHandler()
+        {
+            @Override
+            public void handle( Signal arg0 )
+            {
+                System.out.println( "Queued nodes currently : "
+                                    + myCase.getNodeQueue().size() );
+            }
+        };
+         // SIGUSR1 is used by the JVM and INT, ABRT and friends
+         // are all defined for specific usage by POSIX. While SIGINT
+         // is conveniently issued by Ctrl-C, SIGUSR2 is for user defined
+         // behavior so this is what I use.
+         
+        Signal signal = new Signal( "USR2" );
+        Signal.handle( signal, handler );
+        */
 
         myCase.run( db );
         db.shutdown();
