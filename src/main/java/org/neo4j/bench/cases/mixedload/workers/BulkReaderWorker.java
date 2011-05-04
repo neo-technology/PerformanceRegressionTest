@@ -31,7 +31,7 @@ public class BulkReaderWorker implements Callable<int[]>
     private final GraphDatabaseService graphDb;
 
     private int reads;
-    private int writes;
+    private final int writes;
 
     public BulkReaderWorker( GraphDatabaseService graphDb )
     {
@@ -49,20 +49,27 @@ public class BulkReaderWorker implements Callable<int[]>
         {
             for ( Node node : graphDb.getAllNodes() )
             {
-                reads += 1;
-                for ( Relationship r : node.getRelationships() )
+                try
                 {
                     reads += 1;
-                    for ( String propertyKey : r.getPropertyKeys() )
+                    for ( Relationship r : node.getRelationships() )
                     {
-                        r.getProperty( propertyKey );
+                        reads += 1;
+                        for ( String propertyKey : r.getPropertyKeys() )
+                        {
+                            r.getProperty( propertyKey );
+                            reads += 2; // Prop key and prop value
+                        }
+                    }
+                    for ( String propertyKey : node.getPropertyKeys() )
+                    {
+                        node.getProperty( propertyKey );
                         reads += 2; // Prop key and prop value
                     }
                 }
-                for ( String propertyKey : node.getPropertyKeys() )
+                catch (Exception e)
                 {
-                    node.getProperty( propertyKey );
-                    reads += 2; // Prop key and prop value
+                    // there, that will shut you up
                 }
             }
         }
