@@ -99,12 +99,11 @@ public class MixedLoadBenchCase
 
     public void run( GraphDatabaseService graphDb )
     {
-
         int maxThreads = Runtime.getRuntime().availableProcessors() + 2;
         ExecutorService service = Executors.newFixedThreadPool( maxThreads );
         Random r = new Random();
-
         long startTime = System.currentTimeMillis();
+        // Outside of measured stuff, just to populate the db
         try
         {
             service.submit( new BulkCreateWorker( graphDb, nodes, 100000 ) ).get();
@@ -114,35 +113,81 @@ public class MixedLoadBenchCase
             e.printStackTrace();
         }
 
+        int addTasks = 0;
+        int readTasks = 0;
+        int deleteTasks = 0;
+        int bulkCreateTasks = 0;
+
+        /*
+         * If i had a wish i would wish that:
+         * For 2/3 of the time
+         *   Add tasks start 1/3 of the time
+         *   Read tasks start 1/2 of the time
+         *   Delete tasks start the rest of the time
+         * The rest 1/3 of the time a bulk creator started
+         */
+        double twoThirds = 2.0 / 3;
+        double oneThird = 1.0 / 3;
+        double half = 0.5;
+
+        double startAddTask = twoThirds * oneThird; // = 0.222...
+        double startReadTask = twoThirds * half; // = 0.333...
+        double startDeleteTask = twoThirds * ( 1 - oneThird - half ); /* = 0.111... */
+
+        double startBulkCreateTask = oneThird; // = 0.333...
+
+        assert startAddTask + startReadTask + startDeleteTask
+               + startBulkCreateTask == 1.0;
+
         while ( System.currentTimeMillis() - startTime < timeToRun * 60 * 1000 )
         {
+            /*
+             * So, the ordering is
+             * startReadTask = startBulkCreateTask > startAddTask > startDeleteTask
+             * we have to move from probability densities to cumulative probability functions
+             * for this to work.
+             * tl;dr : the additions in if()s make this work and there is no workaround. :)
+             */
             double dice = r.nextDouble();
-            if ( dice > 0.5 )
+            if ( dice > 1 - startReadTask )
             {
-                simpleTasks.add( service.submit( new CreateWorker( graphDb,
-                        nodes, r.nextInt( 1000 ) ) ) );
+                readTasks++;
+                bulkTasks.add( service.submit( new BulkReaderWorker( graphDb ) ) );
             }
-            else if ( dice > 0.1 )
+            else if ( dice > 1 - ( startReadTask + startBulkCreateTask ) )
             {
-                simpleTasks.add( service.submit( new DeleteWorker( graphDb,
-                        nodes, r.nextInt( 1000 ) ) ) );
-            }
-            if ( r.nextDouble() > 0.3 )
-            {
+                bulkCreateTasks++;
                 bulkTasks.add( service.submit( new BulkCreateWorker( graphDb,
                         nodes, 2000 ) ) );
             }
-            if ( r.nextDouble() < 0.1 )
+            else if ( dice > 1 - ( startReadTask + startBulkCreateTask + startAddTask ) )
             {
-                bulkTasks.add( service.submit( new BulkReaderWorker( graphDb ) ) );
+                addTasks++;
+                // Half the time start an entity create worker, the rest a
+                // property create worker
+                if ( dice > 1 - ( ( startReadTask + startBulkCreateTask + startAddTask ) / 2 ) )
+                {
+                    simpleTasks.add( service.submit( new CreateWorker( graphDb,
+                            nodes, 500 ) ) );
+                }
+                else
+                {
+                    simpleTasks.add( service.submit( new PropertyAddWorker(
+                            graphDb, nodes, 200 ) ) );
+                }
             }
-            if ( r.nextBoolean() )
+            else
             {
-                simpleTasks.add( service.submit( new PropertyAddWorker(
-                        graphDb, nodes, 200 ) ) );
+                deleteTasks++;
+                simpleTasks.add( service.submit( new DeleteWorker( graphDb,
+                        nodes, 500 ) ) );
             }
             try
             {
+                /*
+                 * A (naive?) attempt to keep the number of running threads
+                 * bounded
+                 */
                 while ( simpleTasks.size() + bulkTasks.size() > maxThreads - 2 )
                 {
                     gatherUp( simpleTasks, WorkerType.SIMPLE, false );
@@ -153,6 +198,7 @@ public class MixedLoadBenchCase
             }
             catch ( InterruptedException e )
             {
+                // wut?
                 e.printStackTrace();
             }
         }
@@ -169,19 +215,15 @@ public class MixedLoadBenchCase
         System.out.println( "Run for "
                             + ( System.currentTimeMillis() - startTime )
                             / 60000 + " minutes" );
-    }
-
-    private void printOutResults( String header )
-    {
-        System.out.println( header );
-        System.out.println( "Total time (ms): " + totalTime );
-        System.out.println( "Total reads: " + totalReads );
-        System.out.println( "Total writes: " + totalWrites );
-        System.out.println( "Peak reads per ms:" + peakReads );
-        System.out.println( "Peak writes per ms: " + peakWrites );
-        System.out.println( "Peak Sustained reads per ms: " + sustainedReads );
-        System.out.println( "Peak Sustained writes per ms: " + sustainedWrites );
         System.out.println();
+        System.out.println( "Statistics for worker creation" );
+
+        int totalTasks = addTasks + readTasks + deleteTasks + bulkCreateTasks;
+        System.out.println( "Add tasks: " + addTasks * 1.0 / totalTasks );
+        System.out.println( "Read tasks: " + readTasks * 1.0 / totalTasks );
+        System.out.println( "Delete tasks: " + deleteTasks * 1.0 / totalTasks );
+        System.out.println( "Bulk Create tasks: " + bulkCreateTasks * 1.0
+                / totalTasks );
     }
 
     /**
@@ -253,5 +295,20 @@ public class MixedLoadBenchCase
     {
         gatherUp( simpleTasks, WorkerType.SIMPLE, true );
         gatherUp( bulkTasks, WorkerType.BULK, true );
+    }
+
+    private void printOutResults( String header )
+    {
+        System.out.println( header );
+        System.out.println( "Total time (ms): " + totalTime );
+        System.out.println( "Total reads: " + totalReads );
+        System.out.println( "Total writes: " + totalWrites );
+        System.out.println( "Average reads: " + totalReads * 1.0 / totalTime );
+        System.out.println( "Average writes: " + totalWrites * 1.0 / totalTime );
+        System.out.println( "Peak reads per ms:" + peakReads );
+        System.out.println( "Peak writes per ms: " + peakWrites );
+        System.out.println( "Peak Sustained reads per ms: " + sustainedReads );
+        System.out.println( "Peak Sustained writes per ms: " + sustainedWrites );
+        System.out.println();
     }
 }
