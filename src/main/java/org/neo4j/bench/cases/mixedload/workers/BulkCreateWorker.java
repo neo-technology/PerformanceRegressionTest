@@ -94,6 +94,7 @@ public class BulkCreateWorker implements Callable<int[]>
         result[0] = reads;
         result[1] = writes;
         result[2] = (int) ( System.currentTimeMillis() - time );
+        // Don't measure insertion time in the common queue
         nodes.addAll( myNodes );
         return result;
     }

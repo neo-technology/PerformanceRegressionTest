@@ -122,6 +122,12 @@ public class MixedLoadBenchCase
         int print = 0;
         while ( System.currentTimeMillis() - startTime < ( timeToRun * 60 * 1000 ) / 2 )
         {
+            /*
+             * With prob 1/8 add some primitives
+             * With prob 1/8 add some properties
+             * With prob 3/20 delete some primitives
+             * With prob 3/5 read some stuff
+             */
             double dice = r.nextDouble();
             if ( dice > 0.75 )
             {
@@ -139,7 +145,7 @@ public class MixedLoadBenchCase
                             graphDb, nodes, 100 ) ) );
                 }
             }
-            else if (dice > 0.5)
+            else if ( dice > 0.6 )
             {
                 deleteTasks++;
                 simpleTasks.add( service.submit( new DeleteWorker( graphDb,

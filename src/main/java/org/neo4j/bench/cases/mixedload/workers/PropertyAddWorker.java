@@ -34,9 +34,9 @@ import org.neo4j.graphdb.Transaction;
 public class PropertyAddWorker implements Callable<int[]>
 {
     private static final char[] Symbols = ( "1234567890"
-                                            + "abcdefghijklmnopqrstuvwxyz"
-                                            + "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                                            + "!@#$%^&*()_+=-\\|<>?,./" ).toCharArray();
+            + "abcdefghijklmnopqrstuvwxyz"
+            + "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+            + "!@#$%^&*()_+=-\\|<>?,./" ).toCharArray();
 
     private final GraphDatabaseService graphDb;
     private final Queue<Node> nodes;
@@ -96,6 +96,10 @@ public class PropertyAddWorker implements Callable<int[]>
 
     private void addPropertyToNode()
     {
+        if (nodes.isEmpty())
+        {
+            return;
+        }
         int offset = r.nextInt( nodes.size() );
         boolean createNew = r.nextBoolean();
         String propToAdd = null;
@@ -103,7 +107,7 @@ public class PropertyAddWorker implements Callable<int[]>
         {
             Node temp = nodes.remove();
             if ( createNew && propToAdd == null
-                 && temp.getPropertyKeys().iterator().hasNext() )
+                    && temp.getPropertyKeys().iterator().hasNext() )
             {
                 propToAdd = temp.getPropertyKeys().iterator().next();
                 reads += 1;
@@ -135,7 +139,7 @@ public class PropertyAddWorker implements Callable<int[]>
             if ( !temp.hasRelationship() ) continue;
             Relationship rel = temp.getRelationships().iterator().next();
             if ( createNew && propToAdd == null
-                 && rel.getPropertyKeys().iterator().hasNext() )
+                    && rel.getPropertyKeys().iterator().hasNext() )
             {
                 propToAdd = rel.getPropertyKeys().iterator().next();
                 reads += 1;
