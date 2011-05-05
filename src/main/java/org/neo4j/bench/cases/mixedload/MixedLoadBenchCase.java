@@ -119,6 +119,7 @@ public class MixedLoadBenchCase
         int deleteTasks = 0;
         int bulkCreateTasks = 0;
 
+        int print = 0;
         while ( System.currentTimeMillis() - startTime < ( timeToRun * 60 * 1000 ) / 2 )
         {
             double dice = r.nextDouble();
@@ -142,7 +143,7 @@ public class MixedLoadBenchCase
             {
                 deleteTasks++;
                 simpleTasks.add( service.submit( new DeleteWorker( graphDb,
-                        nodes, 50 ) ) );
+                        nodes, 20 ) ) );
             }
             else
             {
@@ -160,7 +161,8 @@ public class MixedLoadBenchCase
                     gatherUp( simpleTasks, WorkerType.SIMPLE, false );
                     Thread.sleep( 100 );
                 }
-                printOutResults( "Intermediate results for simple" );
+                if ( print++ % 20 == 0 )
+                    printOutResults( "Intermediate results for simple" );
             }
             catch ( InterruptedException e )
             {
@@ -176,6 +178,8 @@ public class MixedLoadBenchCase
         {
             e.printStackTrace();
         }
+
+        print = 0;
         while ( System.currentTimeMillis() - startTime < ( timeToRun * 60 * 1000 ) / 2 )
         {
             double dice = r.nextDouble();
@@ -201,7 +205,8 @@ public class MixedLoadBenchCase
                     gatherUp( bulkTasks, WorkerType.BULK, false );
                     Thread.sleep( 100 );
                 }
-                printOutResults( "Intermediate results for bulk" );
+                if ( print++ % 20 == 0 )
+                    printOutResults( "Intermediate results for simple" );
             }
             catch ( InterruptedException e )
             {

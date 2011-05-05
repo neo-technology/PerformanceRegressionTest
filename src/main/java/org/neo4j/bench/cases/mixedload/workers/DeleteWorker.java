@@ -89,6 +89,7 @@ public class DeleteWorker implements Callable<int[]>
 
     private void deleteRandomNode()
     {
+        if ( nodes.size() < 3 ) return;
         int delIndex = r.nextInt( nodes.size() );
         Node toDelete;
 
