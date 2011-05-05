@@ -32,10 +32,11 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.neo4j.bench.cases.mixedload.workers.BulkCreateWorker;
-import org.neo4j.bench.cases.mixedload.workers.BulkReaderWorker;
+import org.neo4j.bench.cases.mixedload.workers.SampleReadWorker;
 import org.neo4j.bench.cases.mixedload.workers.CreateWorker;
 import org.neo4j.bench.cases.mixedload.workers.DeleteWorker;
 import org.neo4j.bench.cases.mixedload.workers.PropertyAddWorker;
+import org.neo4j.bench.cases.mixedload.workers.BulkReaderWorker;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 
@@ -118,69 +119,35 @@ public class MixedLoadBenchCase
         int deleteTasks = 0;
         int bulkCreateTasks = 0;
 
-        /*
-         * If i had a wish i would wish that:
-         * For 2/3 of the time
-         *   Add tasks start 1/3 of the time
-         *   Read tasks start 1/2 of the time
-         *   Delete tasks start the rest of the time
-         * The rest 1/3 of the time a bulk creator started
-         */
-        double twoThirds = 2.0 / 3;
-        double oneThird = 1.0 / 3;
-        double half = 0.5;
-
-        double startAddTask = twoThirds * oneThird; // = 0.222...
-        double startReadTask = twoThirds * half; // = 0.333...
-        double startDeleteTask = twoThirds * ( 1 - oneThird - half ); /* = 0.111... */
-
-        double startBulkCreateTask = oneThird; // = 0.333...
-
-        assert startAddTask + startReadTask + startDeleteTask
-               + startBulkCreateTask == 1.0;
-
-        while ( System.currentTimeMillis() - startTime < timeToRun * 60 * 1000 )
+        while ( System.currentTimeMillis() - startTime < ( timeToRun * 60 * 1000 ) / 2 )
         {
-            /*
-             * So, the ordering is
-             * startReadTask = startBulkCreateTask > startAddTask > startDeleteTask
-             * we have to move from probability densities to cumulative probability functions
-             * for this to work.
-             * tl;dr : the additions in if()s make this work and there is no workaround. :)
-             */
             double dice = r.nextDouble();
-            if ( dice > 1 - startReadTask )
-            {
-                readTasks++;
-                bulkTasks.add( service.submit( new BulkReaderWorker( graphDb ) ) );
-            }
-            else if ( dice > 1 - ( startReadTask + startBulkCreateTask ) )
-            {
-                bulkCreateTasks++;
-                bulkTasks.add( service.submit( new BulkCreateWorker( graphDb,
-                        nodes, 2000 ) ) );
-            }
-            else if ( dice > 1 - ( startReadTask + startBulkCreateTask + startAddTask ) )
+            if ( dice > 0.75 )
             {
                 addTasks++;
                 // Half the time start an entity create worker, the rest a
                 // property create worker
-                if ( dice > 1 - ( ( startReadTask + startBulkCreateTask + startAddTask ) / 2 ) )
+                if ( dice > 0.825 )
                 {
                     simpleTasks.add( service.submit( new CreateWorker( graphDb,
-                            nodes, 500 ) ) );
+                            nodes, 100 ) ) );
                 }
                 else
                 {
                     simpleTasks.add( service.submit( new PropertyAddWorker(
-                            graphDb, nodes, 200 ) ) );
+                            graphDb, nodes, 100 ) ) );
                 }
             }
-            else
+            else if (dice > 0.5)
             {
                 deleteTasks++;
                 simpleTasks.add( service.submit( new DeleteWorker( graphDb,
-                        nodes, 500 ) ) );
+                        nodes, 50 ) ) );
+            }
+            else
+            {
+                simpleTasks.add( service.submit( new SampleReadWorker( graphDb,
+                        nodes, 400 ) ) );
             }
             try
             {
@@ -188,13 +155,53 @@ public class MixedLoadBenchCase
                  * A (naive?) attempt to keep the number of running threads
                  * bounded
                  */
-                while ( simpleTasks.size() + bulkTasks.size() > maxThreads - 2 )
+                while ( simpleTasks.size() > maxThreads - 2 )
                 {
                     gatherUp( simpleTasks, WorkerType.SIMPLE, false );
+                    Thread.sleep( 100 );
+                }
+                printOutResults( "Intermediate results for simple" );
+            }
+            catch ( InterruptedException e )
+            {
+                // wut?
+                e.printStackTrace();
+            }
+        }
+        try
+        {
+            gatherUp( simpleTasks, WorkerType.SIMPLE, true );
+        }
+        catch ( InterruptedException e )
+        {
+            e.printStackTrace();
+        }
+        while ( System.currentTimeMillis() - startTime < ( timeToRun * 60 * 1000 ) / 2 )
+        {
+            double dice = r.nextDouble();
+            if ( dice > 0.4 )
+            {
+                readTasks++;
+                bulkTasks.add( service.submit( new BulkReaderWorker( graphDb ) ) );
+            }
+            else
+            {
+                bulkCreateTasks++;
+                bulkTasks.add( service.submit( new BulkCreateWorker( graphDb,
+                        nodes, 2000 ) ) );
+            }
+            try
+            {
+                /*
+                 * A (naive?) attempt to keep the number of running threads
+                 * bounded
+                 */
+                while ( bulkTasks.size() > maxThreads - 2 )
+                {
                     gatherUp( bulkTasks, WorkerType.BULK, false );
                     Thread.sleep( 100 );
                 }
-                printOutResults( "Intermediate results" );
+                printOutResults( "Intermediate results for bulk" );
             }
             catch ( InterruptedException e )
             {
@@ -205,7 +212,7 @@ public class MixedLoadBenchCase
         service.shutdown();
         try
         {
-            getAll();
+            gatherUp( simpleTasks, WorkerType.BULK, true );
         }
         catch ( InterruptedException e )
         {
@@ -213,8 +220,8 @@ public class MixedLoadBenchCase
         }
         printOutResults( "Final results" );
         System.out.println( "Run for "
-                            + ( System.currentTimeMillis() - startTime )
-                            / 60000 + " minutes" );
+                + ( System.currentTimeMillis() - startTime )
+                / 60000 + " minutes" );
         System.out.println();
         System.out.println( "Statistics for worker creation" );
 
@@ -227,7 +234,6 @@ public class MixedLoadBenchCase
     }
 
     /**
-     * 
      * @param tasks The list of Futures to gather
      * @param type The type of tasks - used for statistics generation
      * @param sweepUp True if this method should wait for unfinished tasks if
@@ -236,7 +242,7 @@ public class MixedLoadBenchCase
      */
     private void gatherUp( List<Future<int[]>> tasks, WorkerType type,
             boolean sweepUp ) throws InterruptedException
-    {
+            {
         Iterator<Future<int[]>> it = tasks.iterator();
         while ( it.hasNext() )
         {
@@ -254,13 +260,13 @@ public class MixedLoadBenchCase
                     totalTime += taskRes[2];
                     // These are the means for this run
                     double thisReads = taskRes[0]
-                                       / ( taskRes[2] == 0 ? 1 : taskRes[2] );
+                                               / ( taskRes[2] == 0 ? 1 : taskRes[2] );
                     double thisWrites = taskRes[1]
-                                        / ( taskRes[2] == 0 ? 1 : taskRes[2] );
+                                                / ( taskRes[2] == 0 ? 1 : taskRes[2] );
                     // Sustained operations must be at least as long as half the
                     // average runtime
                     if ( type == WorkerType.BULK
-                         && taskRes[2] > totalTime * 0.5 / tasksExecuted )
+                            && taskRes[2] > totalTime * 0.5 / tasksExecuted )
                     {
                         if ( thisReads > sustainedReads )
                             sustainedReads = thisReads;
@@ -268,8 +274,7 @@ public class MixedLoadBenchCase
                             sustainedWrites = thisWrites;
                     }
                     // The test run for more than 10% of the average time, long
-                    // enough for
-                    // getting a peak value
+                    // enough for getting a peak value
                     if ( taskRes[2] > totalTime * 0.1 / tasksExecuted )
                     {
                         if ( thisReads > peakReads ) peakReads = thisReads;
@@ -289,13 +294,7 @@ public class MixedLoadBenchCase
 
             }
         }
-    }
-
-    private void getAll() throws InterruptedException
-    {
-        gatherUp( simpleTasks, WorkerType.SIMPLE, true );
-        gatherUp( bulkTasks, WorkerType.BULK, true );
-    }
+            }
 
     private void printOutResults( String header )
     {
