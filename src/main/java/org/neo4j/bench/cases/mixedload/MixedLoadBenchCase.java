@@ -72,6 +72,8 @@ public class MixedLoadBenchCase
     private final long timeToRun;
     private long startTime;
 
+    private long concurrentFinishTime;
+
     public MixedLoadBenchCase( long timeToRun )
     {
         simpleTasks = new LinkedList<Future<int[]>>();
@@ -85,12 +87,8 @@ public class MixedLoadBenchCase
     public double[] getResults()
     {
         double[] totals = new double[6];
-        // totals[0] = totalReads * 1.0 / totalReadTime;
-        // totals[1] = totalWrites * 1.0 / totalWriteTime;
-        totals[0] = totalReads * 1.0
-        / ( System.currentTimeMillis() - startTime );
-        totals[1] = totalWrites * 1.0
-        / ( System.currentTimeMillis() - startTime );
+        totals[0] = totalReads * 1.0 / ( concurrentFinishTime - startTime );
+        totals[1] = totalWrites * 1.0 / ( concurrentFinishTime - startTime );
         totals[2] = peakReads;
         totals[3] = peakWrites;
         totals[4] = sustainedReads;
@@ -110,12 +108,7 @@ public class MixedLoadBenchCase
         try
         {
             new BulkCreateWorker( graphDb, nodes, 100000 ).call();
-            System.out.println( "Starting indexing" );
-            long beforeIndex = System.currentTimeMillis();
             new PropertyAddWorker( graphDb, nodes, 10000, true ).call();
-            System.out.println( "Indexing took "
-                    + ( System.currentTimeMillis() - beforeIndex )
-                    + " ms" );
         }
         catch ( Exception e )
         {
@@ -125,6 +118,7 @@ public class MixedLoadBenchCase
         startTime = System.currentTimeMillis();
 
         runConcurrentLoad( graphDb, r );
+        concurrentFinishTime = System.currentTimeMillis();
         runBulkLoad( graphDb, r );
 
         printOutResults( "Final results" );
@@ -214,7 +208,7 @@ public class MixedLoadBenchCase
             else
             {
                 bulkTasks.add( service.submit( new BulkCreateWorker( graphDb,
-                        nodes, 2000 ) ) );
+                        nodes, 7000 ) ) );
             }
             try
             {
@@ -344,9 +338,11 @@ public class MixedLoadBenchCase
     {
         System.out.println( header );
         System.out.println( "Average reads: " + totalReads * 1.0
-                / ( System.currentTimeMillis() - startTime ) );
+                            / ( ( concurrentFinishTime == 0 ? System.currentTimeMillis()
+                                    : concurrentFinishTime ) - startTime ) );
         System.out.println( "Average writes: " + totalWrites * 1.0
-                / ( System.currentTimeMillis() - startTime ) );
+                            / ( ( concurrentFinishTime == 0 ? System.currentTimeMillis()
+                                    : concurrentFinishTime ) - startTime ) );
         System.out.println( "Peak reads per ms: " + peakReads );
         System.out.println( "Peak writes per ms: " + peakWrites );
         System.out.println( "Peak Sustained reads per ms: " + sustainedReads );
