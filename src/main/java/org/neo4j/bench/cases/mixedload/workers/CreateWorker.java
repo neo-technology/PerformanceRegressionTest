@@ -78,7 +78,6 @@ public class CreateWorker implements Callable<int[]>
             catch ( Exception e )
             {
                 tx.failure();
-                throw e;
             }
             finally
             {
@@ -94,7 +93,7 @@ public class CreateWorker implements Callable<int[]>
 
     private void createNode()
     {
-        nodes.add( graphDb.createNode() );
+        nodes.offer( graphDb.createNode() );
         writes += 1; // The node
     }
 
@@ -103,8 +102,8 @@ public class CreateWorker implements Callable<int[]>
         int one, two;
         do
         {
-            one = r.nextInt( nodes.size() );
-            two = r.nextInt( nodes.size() );
+            one = r.nextInt( nodes.size() / 10 );
+            two = r.nextInt( nodes.size() / 10 );
         }
         while ( one == two );
 
@@ -114,15 +113,15 @@ public class CreateWorker implements Callable<int[]>
         int i = 0;
         for ( ; i < nextStop; i++ )
         {
-            nodes.add( nodes.remove() );
+            nodes.offer( nodes.poll() );
         }
-        from = nodes.remove();
+        from = nodes.poll();
         nextStop = Math.max( one, two );
         for ( ; i < nextStop; i++ )
         {
-            nodes.add( nodes.remove() );
+            nodes.offer( nodes.poll() );
         }
-        to = nodes.remove();
+        to = nodes.poll();
 
         if ( r.nextBoolean() )
         {
@@ -134,6 +133,8 @@ public class CreateWorker implements Callable<int[]>
             graphDb.getNodeById( to.getId() ).createRelationshipTo(
                     graphDb.getNodeById( from.getId() ), RelType.TYPE_GENERIC );
         }
+        nodes.offer( from );
+        nodes.offer( to );
         reads += 2; // For the nodes
         writes += 1; // For the relationship
     }

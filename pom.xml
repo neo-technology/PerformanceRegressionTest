@@ -27,6 +27,11 @@
 			<version>${neo-version}</version>
 		</dependency>
 		<dependency>
+			<groupId>org.neo4j</groupId>
+			<artifactId>neo4j-lucene-index</artifactId>
+			<version>${neo-version}</version>
+		</dependency>
+		<dependency>
 			<groupId>jfree</groupId>
 			<artifactId>jfreechart</artifactId>
 			<version>1.0.12</version>

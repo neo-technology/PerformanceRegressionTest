@@ -69,7 +69,7 @@ public class BulkReaderWorker implements Callable<int[]>
                 }
                 catch (Exception e)
                 {
-                    // there, that will shut you up
+                    e.printStackTrace();
                 }
             }
         }

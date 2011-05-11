@@ -73,7 +73,6 @@ public class DeleteWorker implements Callable<int[]>
             catch ( Exception e )
             {
                 tx.failure();
-                throw e;
             }
             finally
             {
@@ -95,16 +94,15 @@ public class DeleteWorker implements Callable<int[]>
 
         for ( int i = 0; i < delIndex; i++ )
         {
-            nodes.add( nodes.remove() );
+            nodes.offer( nodes.poll() );
         }
-        toDelete = nodes.remove();
+        toDelete = nodes.poll();
         for ( Relationship rel : toDelete.getRelationships( Direction.BOTH ) )
         {
             rel.delete();
             writes += 1; // The relationship delete
             reads += 1;
         }
-        nodes.remove( toDelete );
         graphDb.getNodeById( toDelete.getId() ).delete();
         reads += 1; // The node read in
         writes += 1; // The node delete

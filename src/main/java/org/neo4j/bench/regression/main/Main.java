@@ -40,12 +40,11 @@ public class Main
     public static void main( String[] args ) throws Exception
     {
         Args argz = new Args( args );
-        long timeToRun = Long.parseLong( argz.get( "time-to-run", "120" ) ); /* Time in minutes */
+        long timeToRun = Long.parseLong( argz.get( "time-to-run", "120" ) );  // Time in minutes
         Map<String, String> props = new HashMap<String, String>();
         props.put( Config.USE_MEMORY_MAPPED_BUFFERS, "true" );
         final GraphDatabaseService db = new EmbeddedGraphDatabase( "db" );
         final MixedLoadBenchCase myCase = new MixedLoadBenchCase( timeToRun );
-
         /*
          * Commented out because it breaks windows but it is nice to have for
          * testing on real OSes
@@ -55,18 +54,17 @@ public class Main
             public void handle( Signal arg0 )
             {
                 System.out.println( "Queued nodes currently : "
-                                    + myCase.getNodeQueue().size() );
+                        + myCase.getNodeQueue().size() );
             }
         };
-         // SIGUSR1 is used by the JVM and INT, ABRT and friends
-         // are all defined for specific usage by POSIX. While SIGINT
-         // is conveniently issued by Ctrl-C, SIGUSR2 is for user defined
-         // behavior so this is what I use.
-         
+        // SIGUSR1 is used by the JVM and INT, ABRT and friends
+        // are all defined for specific usage by POSIX. While SIGINT
+        // is conveniently issued by Ctrl-C, SIGUSR2 is for user defined
+        // behavior so this is what I use.
+
         Signal signal = new Signal( "USR2" );
         Signal.handle( signal, handler );
-        */
-
+         */
         myCase.run( db );
         db.shutdown();
         double[] results = myCase.getResults();
@@ -81,9 +79,9 @@ public class Main
 
         String statsFilename = argz.get(
                 GenerateOpsPerSecChart.OPS_PER_SECOND_FILE_ARG,
-                "ops-per-second" );
+        "ops-per-second" );
         String chartFilename = argz.get( GenerateOpsPerSecChart.CHART_FILE_ARG,
-                "chart.png" );
+        "chart.png" );
         double threshold = Double.parseDouble( argz.get( "threshold", "0.05" ) );
 
         PrintStream opsPerSecOutFile = new PrintStream( new FileOutputStream(

@@ -26,6 +26,7 @@ import java.util.concurrent.Callable;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
+import org.neo4j.graphdb.index.Index;
 
 public class SampleReadWorker implements Callable<int[]>
 {
@@ -34,21 +35,31 @@ public class SampleReadWorker implements Callable<int[]>
     private int reads;
     private int ops;
     private final Queue<Node> nodes;
+    private final boolean readIndex;
+
+    private final Index<Node> nodeIndex;
+    private final Index<Relationship> relIndex;
 
     public SampleReadWorker( GraphDatabaseService graphDb, Queue<Node> nodes,
-            int ops )
+            int ops, boolean readIndex )
     {
         this.graphDb = graphDb;
         this.nodes = nodes;
         this.reads = 0;
         this.ops = ops;
+        this.readIndex = readIndex;
+
+        this.nodeIndex = graphDb.index().forNodes(
+                PropertyAddWorker.NodeIndexName );
+        this.relIndex = graphDb.index().forRelationships(
+                PropertyAddWorker.RelationshipIndexName );
     }
 
     @Override
     public int[] call() throws Exception
     {
-        long time = System.currentTimeMillis();
         Random r = new Random();
+        long time = System.currentTimeMillis();
         while ( ops-- > 0 )
         {
             try
@@ -68,23 +79,38 @@ public class SampleReadWorker implements Callable<int[]>
                 {
                     for ( Relationship rel : read.getRelationships() )
                     {
-                        rel.getId();
-                        reads += 1; // Probable re-read
+                        reads += 1; // Possible re-read the rel from storage
+                        Object propValue;
+                        for ( String propKey : rel.getPropertyKeys() )
+                        {
+                            propValue = rel.getProperty( propKey );
+                            if ( readIndex )
+                            {
+                                relIndex.get( propKey, propValue ).close();
+                            }
+                            reads += 2; // Not for the index but for the prop
+                            // key/value
+                        }
                     }
                 }
-                if ( r.nextDouble() > 0.75 )
+                else
                 {
+                    Object propValue;
                     for ( String propKey : read.getPropertyKeys() )
                     {
-                        reads += 1; // the prop key
-                        read.getProperty( propKey ).toString();
-                        // toString() to make sure this is not hotspoted away
-                        reads += 1; // the prop value
+                        propValue = read.getProperty( propKey );
+                        if ( readIndex )
+                        {
+                            nodeIndex.get( propKey, propValue ).close();
+                        }
+                        reads += 2; // the prop key and value
                     }
                 }
+                nodes.offer( read );
             }
             catch (Exception e)
             {
+                e.printStackTrace();
                 /*
                  *  We need to swallow this since so far we have stepped on
                  *  other workers code and we need to make sure our noise is
@@ -98,7 +124,7 @@ public class SampleReadWorker implements Callable<int[]>
         int[] result = new int[3];
         result[0] = reads;
         result[1] = 0;
-        result[2] = (int) ( System.currentTimeMillis() - time );
+        result[2] = reads == 0 ? 0 : (int) ( System.currentTimeMillis() - time );
         return result;
     }
 }
