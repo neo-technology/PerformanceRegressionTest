@@ -5,6 +5,7 @@ tarpit/
 bin
 .project
 .settings/
+.idea/
 target
 ops-per-second
 *.iml
