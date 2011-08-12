@@ -19,6 +19,7 @@
  */
 package org.neo4j.bench.regression.main;
 
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.text.SimpleDateFormat;
@@ -70,6 +71,21 @@ public class Main
         myCase.run( db );
         db.shutdown();
         double[] results = myCase.getResults();
+        String statsFileName = argz.get(GenerateOpsPerSecChart.OPS_PER_SECOND_FILE_ARG, "ops-per-second");
+        String chartFilename = argz.get( GenerateOpsPerSecChart.CHART_FILE_ARG, "chart.png" );
+        double threshold = Double.parseDouble( argz.get( "threshold", "0.05" ) );
+
+        appendNewStatsToFile(results, statsFileName);
+        produceChartIncludingHistoricalData(statsFileName, chartFilename, threshold);
+    }
+
+    private static void produceChartIncludingHistoricalData(String statsFileName, String chartFilename, double threshold) throws Exception {
+        GenerateOpsPerSecChart aggregator = new GenerateOpsPerSecChart(
+                statsFileName, chartFilename, threshold );
+        aggregator.process();
+    }
+
+    private static void appendNewStatsToFile(double[] results, String statsFileName) throws FileNotFoundException {
         Stats newStats = new Stats(
                 new SimpleDateFormat( "MM-dd-HH-mm" ).format( new Date() ) );
         newStats.setAvgReadsPerSec( results[0] );
@@ -79,20 +95,8 @@ public class Main
         newStats.setSustainedReadsPerSec( results[4] );
         newStats.setSustainedWritesPerSec( results[5] );
 
-        String statsFilename = argz.get(
-                GenerateOpsPerSecChart.OPS_PER_SECOND_FILE_ARG,
-                "ops-per-second" );
-        String chartFilename = argz.get( GenerateOpsPerSecChart.CHART_FILE_ARG,
-                "chart.png" );
-        double threshold = Double.parseDouble( argz.get( "threshold", "0.05" ) );
-
         PrintStream opsPerSecOutFile = new PrintStream( new FileOutputStream(
-                statsFilename, true ) );
-
+                statsFileName, true ) );
         newStats.write( opsPerSecOutFile, true );
-
-        GenerateOpsPerSecChart aggreegator = new GenerateOpsPerSecChart(
-                statsFilename, chartFilename, threshold );
-        aggreegator.process();
     }
 }
