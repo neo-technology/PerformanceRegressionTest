@@ -97,7 +97,14 @@ public class MixedLoadBenchCase
     {
 
         int maxThreads = Runtime.getRuntime().availableProcessors() + 2;
-        ExecutorService service = Executors.newFixedThreadPool( maxThreads );
+        ExecutorService service = Executors.newFixedThreadPool( maxThreads, new ThreadFactory() {
+            @Override
+            public Thread newThread(Runnable r) {
+                Thread thread = new Thread(r);
+                thread.setDaemon(true);
+                return thread;
+            }
+        } );
         Random r = new Random();
 
         long startTime = System.currentTimeMillis();
@@ -152,11 +159,8 @@ public class MixedLoadBenchCase
                 e.printStackTrace();
             }
         }
-        try {
-            service.awaitTermination(10, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+
+        service.shutdown();
         System.out.println("Service shut-down complete");
         try
         {
@@ -207,7 +211,7 @@ public class MixedLoadBenchCase
                 tasksExecuted++;
                 try
                 {
-                    int[] taskRes = task.get();
+                    int[] taskRes = task.get(5, TimeUnit.SECONDS);
                     totalReads += taskRes[0];
                     totalWrites += taskRes[1];
                     totalTime += taskRes[2];
@@ -237,11 +241,11 @@ public class MixedLoadBenchCase
                 }
                 catch ( ExecutionException e )
                 {
-                    // It threw an exception, print and continue
                     e.printStackTrace();
-                    continue;
-                }
-                finally
+                } catch (TimeoutException e) {
+                    System.err.println("Task failed to terminate: " + task);
+                    e.printStackTrace();
+                } finally
                 {
                     it.remove();
                 }
