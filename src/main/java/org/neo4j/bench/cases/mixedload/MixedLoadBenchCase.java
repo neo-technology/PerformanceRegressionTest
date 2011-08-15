@@ -114,10 +114,8 @@ public class MixedLoadBenchCase
             e.printStackTrace();
         }
 
-        System.out.printf("timeToRun = %d min%n", timeToRun);
         while ( System.currentTimeMillis() - startTime < timeToRun * 60 * 1000 )
         {
-            System.out.printf("test has been running for %ds%n", (System.currentTimeMillis() - startTime) / 1000);
             double dice = r.nextDouble();
             if ( dice > 0.5 )
             {
@@ -159,6 +157,7 @@ public class MixedLoadBenchCase
             }
         }
         service.shutdown();
+        System.out.println("Service shut-down complete");
         try
         {
             getAll();
