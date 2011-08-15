@@ -25,11 +25,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.Random;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.*;
 
 import org.neo4j.bench.cases.mixedload.workers.BulkCreateWorker;
 import org.neo4j.bench.cases.mixedload.workers.BulkReaderWorker;
@@ -156,7 +152,11 @@ public class MixedLoadBenchCase
                 e.printStackTrace();
             }
         }
-        service.shutdown();
+        try {
+            service.awaitTermination(10, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         System.out.println("Service shut-down complete");
         try
         {
