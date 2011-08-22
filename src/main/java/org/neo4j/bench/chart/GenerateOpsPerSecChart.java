@@ -70,7 +70,7 @@ public class GenerateOpsPerSecChart
 
     public boolean process() throws Exception
     {
-        // Take the 10 latest
+        // Take the latest
         if ( data.size() > TESTS_TO_DRAW )
         {
             Iterator<Stats> it = data.iterator();
@@ -99,7 +99,7 @@ public class GenerateOpsPerSecChart
             double previousReads = previous.getAvgReadsPerSec();
             double previousWrites = previous.getAvgWritePerSec();
             if ( previousReads * ( 1 + threshold ) > latestRun.getAvgReadsPerSec()
-                 || previousWrites * ( 1 + threshold ) > latestRun.getAvgWritePerSec() )
+                    || previousWrites * ( 1 + threshold ) > latestRun.getAvgWritePerSec() )
             {
                 return previous;
             }
@@ -128,19 +128,6 @@ public class GenerateOpsPerSecChart
         basePlot.setDataset( dataset );
         basePlot.getRangeAxis().setLowerBound( 0 );
         basePlot.getRangeAxis().setUpperBound( maxAvg );
-
-        // CategoryPlot topPlot = new CategoryPlot( dataset, null,
-        // new NumberAxis( "Operations Per Sec" ), barRenderer );
-        // topPlot.setOrientation( PlotOrientation.VERTICAL );
-        // topPlot.setDataset( dataset );
-        // topPlot.getRangeAxis().setLowerBound( 40 );
-        // topPlot.getRangeAxis().setUpperBound( 100 );
-
-        // CombinedDomainCategoryPlot combinedPlot = new
-        // CombinedDomainCategoryPlot(
-        // catAxis );
-        // combinedPlot.add( topPlot, 1 );
-        // combinedPlot.add( basePlot, 4 );
 
         JFreeChart chart = new JFreeChart( "Performance Chart", basePlot );
 
