@@ -30,6 +30,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.neo4j.bench.cases.mixedload.workers.BulkCreateWorker;
 import org.neo4j.bench.cases.mixedload.workers.BulkReaderWorker;
@@ -129,7 +132,18 @@ public class MixedLoadBenchCase
     {
         int print = 0;
         int maxThreads = Runtime.getRuntime().availableProcessors() + 2;
-        ExecutorService service = Executors.newFixedThreadPool( maxThreads );
+
+        ExecutorService service = Executors.newFixedThreadPool( maxThreads,
+                new ThreadFactory()
+                {
+                    @Override
+                    public Thread newThread( Runnable r )
+                    {
+                        Thread thread = new Thread( r );
+                        thread.setDaemon( true );
+                        return thread;
+                    }
+                } );
         while ( System.currentTimeMillis() - startTime < ( timeToRun * 60 * 1000 * 2 / 3 ) )
         {
             /*
@@ -231,7 +245,9 @@ public class MixedLoadBenchCase
                 e.printStackTrace();
             }
         }
+
         service.shutdown();
+        System.out.println( "Service shut-down complete" );
         try
         {
             gatherUp( bulkTasks, WorkerType.BULK, true );
@@ -251,7 +267,7 @@ public class MixedLoadBenchCase
      */
     private void gatherUp( List<Future<int[]>> tasks, WorkerType type,
             boolean sweepUp ) throws InterruptedException
-            {
+    {
         Iterator<Future<int[]>> it = tasks.iterator();
         while ( it.hasNext() )
         {
@@ -262,12 +278,14 @@ public class MixedLoadBenchCase
             {
                 try
                 {
-                    int[] taskRes = task.get();
+                    int[] taskRes = task.get( 5, TimeUnit.SECONDS );
+                    totalReads += taskRes[0];
+                    totalWrites += taskRes[1];
                     // These are the means for this run
                     double thisReads = taskRes[0]
-                                               / ( taskRes[2] == 0 ? 1 : taskRes[2] );
+                                       / ( taskRes[2] == 0 ? 1 : taskRes[2] );
                     double thisWrites = taskRes[1]
-                                                / ( taskRes[2] == 0 ? 1 : taskRes[2] );
+                                        / ( taskRes[2] == 0 ? 1 : taskRes[2] );
                     if ( taskRes[0] > 0 )
                     {
                         readTasksExecuted++;
@@ -292,7 +310,7 @@ public class MixedLoadBenchCase
                         // Sustained operations must be at least as long as
                         // 9/10ths the average runtime
                         if ( taskRes[2] > ( System.currentTimeMillis() - startTime )
-                                * 0.9 / readTasksExecuted )
+                                          * 0.9 / readTasksExecuted )
                         {
                             if ( thisReads > sustainedReads )
                             {
@@ -308,23 +326,26 @@ public class MixedLoadBenchCase
                     // The test run for more than 10% of the average time, long
                     // enough for getting a peak value
                     if ( thisReads > peakReads
-                            && taskRes[2] > ( ( System.currentTimeMillis() - startTime ) )
-                            * 0.1 / readTasksExecuted )
+                         && taskRes[2] > ( ( System.currentTimeMillis() - startTime ) )
+                                         * 0.1 / readTasksExecuted )
                     {
                         peakReads = thisReads;
                     }
                     if ( thisWrites > peakWrites
-                            && taskRes[2] > ( ( System.currentTimeMillis() - startTime ) )
-                            * 0.1 / writeTasksExecuted )
+                         && taskRes[2] > ( ( System.currentTimeMillis() - startTime ) )
+                                         * 0.1 / writeTasksExecuted )
                     {
                         peakWrites = thisWrites;
                     }
                 }
                 catch ( ExecutionException e )
                 {
-                    // It threw an exception, print and continue
                     e.printStackTrace();
-                    continue;
+                }
+                catch ( TimeoutException e )
+                {
+                    System.err.println( "Task failed to terminate: " + task );
+                    e.printStackTrace();
                 }
                 finally
                 {
@@ -333,15 +354,19 @@ public class MixedLoadBenchCase
 
             }
         }
-            }
+    }
 
     private void printOutResults( String header )
     {
         System.out.println( header );
-        System.out.println( "Average reads: " + totalReads * 1.0
+        System.out.println( "Average reads: "
+                            + totalReads
+                            * 1.0
                             / ( ( concurrentFinishTime == 0 ? System.currentTimeMillis()
                                     : concurrentFinishTime ) - startTime ) );
-        System.out.println( "Average writes: " + totalWrites * 1.0
+        System.out.println( "Average writes: "
+                            + totalWrites
+                            * 1.0
                             / ( ( concurrentFinishTime == 0 ? System.currentTimeMillis()
                                     : concurrentFinishTime ) - startTime ) );
         System.out.println( "Peak reads per ms: " + peakReads );

@@ -57,7 +57,6 @@ public class GenerateOpsPerSecChart
     private final SortedSet<Stats> data;
     private Set<Stats> dataToDraw;
     private final double threshold;
-    private double maxAvg;
 
     public GenerateOpsPerSecChart( String inputFilename, String outputFilename,
             double threshold )
@@ -127,7 +126,6 @@ public class GenerateOpsPerSecChart
         basePlot.setOrientation( PlotOrientation.VERTICAL );
         basePlot.setDataset( dataset );
         basePlot.getRangeAxis().setLowerBound( 0 );
-        basePlot.getRangeAxis().setUpperBound( maxAvg );
 
         JFreeChart chart = new JFreeChart( "Performance Chart", basePlot );
 
@@ -143,29 +141,24 @@ public class GenerateOpsPerSecChart
 
     private DefaultCategoryDataset generateDataset()
     {
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+        DefaultCategoryDataset dataSet = new DefaultCategoryDataset();
         double currentMax = Double.MIN_VALUE;
 
         for ( Stats key : dataToDraw )
         {
-            dataset.addValue( key.getAvgReadsPerSec(), "reads", key.getName() );
-            if ( key.getAvgReadsPerSec() > currentMax )
-            {
-                currentMax = key.getAvgReadsPerSec();
-            }
-            dataset.addValue( key.getAvgWritePerSec(), "writes",
-                    key.getName() );
-            dataset.addValue( key.getPeakReadsPerSec(), "peak reads",
-                    key.getName() );
-            dataset.addValue( key.getPeakWritesPerSec(), "peak writes",
-                    key.getName() );
-            dataset.addValue( key.getSustainedReadsPerSec(), "sust reads",
-                    key.getName() );
-            dataset.addValue( key.getSustainedWritesPerSec(), "sust writes",
-                    key.getName() );
+            dataSet.addValue(key.getAvgReadsPerSec(), "reads", key.getName());
+            dataSet.addValue(key.getAvgWritePerSec(), "writes",
+                    key.getName());
+            dataSet.addValue(key.getPeakReadsPerSec(), "peak reads",
+                    key.getName());
+            dataSet.addValue(key.getPeakWritesPerSec(), "peak writes",
+                    key.getName());
+            dataSet.addValue(key.getSustainedReadsPerSec(), "sust reads",
+                    key.getName());
+            dataSet.addValue(key.getSustainedWritesPerSec(), "sust writes",
+                    key.getName());
         }
-        this.maxAvg = currentMax;
-        return dataset;
+        return dataSet;
     }
 
     /**
