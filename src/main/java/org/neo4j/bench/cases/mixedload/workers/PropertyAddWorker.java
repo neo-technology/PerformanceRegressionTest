@@ -30,32 +30,43 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
+import org.neo4j.graphdb.index.Index;
 
 public class PropertyAddWorker implements Callable<int[]>
 {
+    public static final String NodeIndexName = "nodes";
+    public static final String RelationshipIndexName = "relationships";
+
     private static final char[] Symbols = ( "1234567890"
-                                            + "abcdefghijklmnopqrstuvwxyz"
-                                            + "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                                            + "!@#$%^&*()_+=-\\|<>?,./" ).toCharArray();
+            + "abcdefghijklmnopqrstuvwxyz"
+            + "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+            + "!@#$%^&*()_+=-\\|<>?,./" ).toCharArray();
 
     private final GraphDatabaseService graphDb;
     private final Queue<Node> nodes;
     private final Random r;
     private int ops;
+    private final boolean indexThem;
 
     private int reads;
     private int writes;
 
+    private final Index<Node> nodeIndex;
+    private final Index<Relationship> relIndex;
+
     public PropertyAddWorker( GraphDatabaseService graphDb, Queue<Node> nodes,
-            int ops )
+            int ops, boolean indexThem )
     {
         this.graphDb = graphDb;
         this.nodes = nodes;
         this.r = new Random();
         this.ops = ops;
-
+        this.indexThem = indexThem;
         this.reads = 0;
         this.writes = 0;
+
+        this.nodeIndex = graphDb.index().forNodes( NodeIndexName );
+        this.relIndex = graphDb.index().forRelationships( RelationshipIndexName );
     }
 
     @Override
@@ -80,7 +91,6 @@ public class PropertyAddWorker implements Callable<int[]>
             catch ( Exception e )
             {
                 tx.failure();
-                throw e;
             }
             finally
             {
@@ -96,36 +106,42 @@ public class PropertyAddWorker implements Callable<int[]>
 
     private void addPropertyToNode()
     {
-        int offset = r.nextInt( nodes.size() );
+        int offset = r.nextInt( nodes.size() / 10 );
         boolean createNew = r.nextBoolean();
         String propToAdd = null;
         while ( offset-- > 0 )
         {
-            Node temp = nodes.remove();
+            Node temp = nodes.poll();
             if ( createNew && propToAdd == null
-                 && temp.getPropertyKeys().iterator().hasNext() )
+                    && temp.getPropertyKeys().iterator().hasNext() )
             {
                 propToAdd = temp.getPropertyKeys().iterator().next();
                 reads += 1;
                 createNew = false; // we got a name, no need to look anymore
             }
-            nodes.add( temp );
+            nodes.offer( temp );
         }
-        Node toChange = nodes.remove();
+        Node toChange = nodes.poll();
         if ( propToAdd == null || toChange.hasProperty( propToAdd ) )
         {
             propToAdd = getRandomPropertyName();
         }
-        toChange.setProperty( propToAdd, getRandomPropertyValue() );
+        Object valueToSet = getRandomPropertyValue();
+        toChange.setProperty( propToAdd, valueToSet );
+        if ( indexThem )
+        {
+            nodeIndex.add( toChange, propToAdd, valueToSet );
+        }
+        nodes.offer( toChange );
         writes += 1;
     }
 
     private void addPropertyToRelationship()
     {
-        int offset = r.nextInt( nodes.size() );
+        int offset = r.nextInt( nodes.size() / 10 );
         boolean createNew = r.nextBoolean();
         String propToAdd = null;
-        Node temp = nodes.remove();
+        Node temp = nodes.poll();
         /*
          *  We skip at least offset and then grab the first
          *  node that has a relationship
@@ -135,14 +151,14 @@ public class PropertyAddWorker implements Callable<int[]>
             if ( !temp.hasRelationship() ) continue;
             Relationship rel = temp.getRelationships().iterator().next();
             if ( createNew && propToAdd == null
-                 && rel.getPropertyKeys().iterator().hasNext() )
+                    && rel.getPropertyKeys().iterator().hasNext() )
             {
                 propToAdd = rel.getPropertyKeys().iterator().next();
                 reads += 1;
                 createNew = false; // we got a name, no need to look anymore
             }
-            nodes.add( temp );
-            temp = nodes.remove();
+            nodes.offer( temp );
+            temp = nodes.poll();
         }
         // temp now holds a node that will do
         if ( propToAdd == null )
@@ -162,8 +178,16 @@ public class PropertyAddWorker implements Callable<int[]>
         {
             thisNodesRels.add( rel );
         }
-        thisNodesRels.get( r.nextInt( thisNodesRels.size() ) ).setProperty(
-                propToAdd, getRandomPropertyValue() );
+        Object valueToSet = getRandomPropertyValue();
+        Relationship toChange = thisNodesRels.get( r.nextInt( thisNodesRels.size() ) );
+        toChange.setProperty(
+                propToAdd, valueToSet );
+        toChange.setProperty( propToAdd, valueToSet );
+        if ( indexThem )
+        {
+            relIndex.add( toChange, propToAdd, valueToSet );
+        }
+        nodes.offer( temp );
     }
 
     private String getRandomPropertyName()

@@ -70,7 +70,6 @@ public class GenerateOpsPerSecChart
 
     public boolean process() throws Exception
     {
-        // Take the latest
         if ( data.size() > TESTS_TO_DRAW )
         {
             Iterator<Stats> it = data.iterator();
@@ -93,13 +92,14 @@ public class GenerateOpsPerSecChart
     private Stats detectDegradation( double threshold )
     {
         Stats latestRun = data.last();
-        System.out.println( "Latest run test is " + latestRun );
         for ( Stats previous : data.headSet( latestRun ) )
         {
             double previousReads = previous.getAvgReadsPerSec();
             double previousWrites = previous.getAvgWritePerSec();
-            if ( previousReads * ( 1 + threshold ) > latestRun.getAvgReadsPerSec()
-                    || previousWrites * ( 1 + threshold ) > latestRun.getAvgWritePerSec() )
+            if ( previousReads > latestRun.getAvgReadsPerSec()
+                                 * ( 1 + threshold )
+                    || previousWrites > latestRun.getAvgWritePerSec()
+                                     * ( 1 + threshold ) )
             {
                 return previous;
             }

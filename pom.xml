@@ -18,12 +18,17 @@
 	
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.neo4j.qa</groupId>
-	<artifactId>peformance-benchmark</artifactId>
+	<artifactId>PerformanceRegressionTest</artifactId>
 
 	<dependencies>
 		<dependency>
 			<groupId>org.neo4j</groupId>
 			<artifactId>neo4j-kernel</artifactId>
+			<version>${neo-version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.neo4j</groupId>
+			<artifactId>neo4j-lucene-index</artifactId>
 			<version>${neo-version}</version>
 		</dependency>
 		<dependency>
