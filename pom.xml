@@ -1,21 +1,23 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<parent>
 		<groupId>org.neo4j</groupId>
 		<artifactId>parent-central</artifactId>
 		<version>17</version>
 	</parent>
-	
+
 	<properties>
 		<neo-version>1.4-SNAPSHOT</neo-version>
+		<storage-folder>${basedir}/tarpit</storage-folder>
 		<jvm-memory>768M</jvm-memory>
-		<run-main-class>Please supply main class via argument</run-main-class>
-		<threshold/>
-		<tarToMail/>
-		<chart-file/>
-		<ops-per-sec-file/>
-		<time-to-run/>
+		<run-main-class>org.neo4j.bench.regression.main.Main</run-main-class>
+		<threshold />
+		<tarToMail />
+		<chart-file>chart.png</chart-file>
+		<ops-per-sec-file>${basedir}/performance.history</ops-per-sec-file>
+		<time-to-run />
 	</properties>
-	
+
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.neo4j.qa</groupId>
 	<artifactId>PerformanceRegressionTest</artifactId>
@@ -54,39 +56,72 @@
 			<scope>compile</scope>
 		</dependency>
 	</dependencies>
-	
+
 	<build>
 		<plugins>
 			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>exec-maven-plugin</artifactId>
-				<version>1.1</version>
-				<executions>
-					<execution>
-						<goals>
-							<goal>exec</goal>
-						</goals>
-					</execution>
-				</executions>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<version>1.6</version>
 				<configuration>
-					<executable>java</executable>
-					<workingDirectory>${project.build.directory}</workingDirectory>
-					<arguments>
-						<argument>-Xmx${jvm-memory}</argument>
-						<argument>-server</argument>
-                        <argument>-XX:+UseConcMarkSweepGC</argument>
-						<argument>-classpath</argument>
-						<classpath/>
-						<argument>${run-main-class}</argument>
-						<argument>-neo-version=${neo-version}</argument>
-						<argument>-threshold=${threshold}</argument>
-						<argument>-tarToMail=${tarToMail}</argument>
-						<argument>-chart-file=${chart-file}</argument>
-						<argument>-ops-per-sec-file=${ops-per-sec-file}</argument>
-						<argument>-time-to-run=${time-to-run}</argument>
-					</arguments>
+					<target>
+						<!-- Needed for the ant "if" task -->
+						<taskdef resource="net/sf/antcontrib/antcontrib.properties"
+							classpathref="maven.plugin.classpath" />
+
+						<property name="classpath" refid="maven.runtime.classpath" />
+
+						<!-- Set up output folder for this run -->
+						<tstamp>
+							<format property="currenttime" pattern="yyyy-MM-dd-hhmmss" />
+						</tstamp>
+						<property name="outfolder" value="${storage-folder}/${currenttime}" />
+						<mkdir dir="${outfolder}" />
+
+						<!-- Run performance tests -->
+						<exec executable="java" output="${outfolder}/raw" dir="${project.build.directory}"
+							failonerror="false" resultproperty="perftest-result">
+
+							<arg value="-Xmx${jvm-memory}" />
+							<arg value="-server" />
+							<arg value="-XX:+UseConcMarkSweepGC" />
+							<arg value="-classpath" />
+							<arg value="${classpath}" />
+							<arg value="${run-main-class}" />
+							<arg value="-neo-version=${neo-version}" />
+							<arg value="-threshold=${threshold}" />
+							<arg value="-tarToMail=${tarToMail}" />
+							<arg value="-chart-file=${outfolder}/${chart-file}" />
+							<arg value="-ops-per-sec-file=${ops-per-sec-file}" />
+							<arg value="-time-to-run=${time-to-run}" />
+						</exec>
+
+						<zip destfile="${outfolder}.zip" basedir="${outfolder}" />
+						<delete dir="${outfolder}" />
+
+						<if>
+							<not>
+								<equals arg1="${perftest-result}" arg2="0" />
+							</not>
+							<then>
+								<fail
+									message="Performance regression run failed, see output in ${outfolder}.zip."
+									status="${perftest-result}" />
+							</then>
+						</if>
+
+					</target>
 				</configuration>
+
+				<dependencies>
+					<dependency>
+						<groupId>ant-contrib</groupId>
+						<artifactId>ant-contrib</artifactId>
+						<version>20020829</version>
+					</dependency>
+				</dependencies>
+
 			</plugin>
+
 		</plugins>
 	</build>
 </project>

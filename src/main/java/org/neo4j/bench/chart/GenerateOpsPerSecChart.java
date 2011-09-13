@@ -53,10 +53,13 @@ public class GenerateOpsPerSecChart
 
     private final String inputFilename;
     private final String outputFilename;
-    private boolean alarm;
+    private boolean performanceHasDegraded;
+    // If performance has degraded, store the stats that trumped current performance here.
+    private Stats trumpingStats; 
     private final SortedSet<Stats> data;
     private Set<Stats> dataToDraw;
     private final double threshold;
+    private boolean hasProcessed = false;
 
     public GenerateOpsPerSecChart( String inputFilename, String outputFilename,
             double threshold )
@@ -67,7 +70,7 @@ public class GenerateOpsPerSecChart
         data = loadOpsPerSecond( this.inputFilename );
     }
 
-    public boolean process() throws Exception
+    public void process() throws Exception
     {
         if ( data.size() > TESTS_TO_DRAW )
         {
@@ -83,31 +86,31 @@ public class GenerateOpsPerSecChart
         {
             dataToDraw = data;
         }
-        alarm = detectDegradation( threshold ) != null;
-        generateChart();
-        return alarm;
+        
+        trumpingStats = detectDegradation( threshold );
+        performanceHasDegraded = trumpingStats != null;
+        hasProcessed = true;
     }
-
-    private Stats detectDegradation( double threshold )
-    {
-        Stats latestRun = data.last();
-        for ( Stats previous : data.headSet( latestRun ) )
-        {
-            double previousReads = previous.getAvgReadsPerSec();
-            double previousWrites = previous.getAvgWritePerSec();
-            if ( previousReads > latestRun.getAvgReadsPerSec()
-                                 * ( 1 + threshold )
-                    || previousWrites > latestRun.getAvgWritePerSec()
-                                     * ( 1 + threshold ) )
-            {
-                return previous;
-            }
-        }
-        return null;
+    
+    public boolean performanceHasDegraded() {
+        if(hasProcessed) 
+            return performanceHasDegraded;
+        throw new RuntimeException("Unable to determine performance degradation before having run #process()");
     }
-
-    private void generateChart() throws Exception
+    
+    public Stats getTrumpingStats() {
+        return trumpingStats;
+    }
+    
+    public Stats getLatestStats() {
+        return data.last();
+    }
+    
+    public void generateChart() throws Exception
     {
+        if(!hasProcessed) 
+            throw new RuntimeException("Unable to generate chart before having run #process()");
+        
         DefaultCategoryDataset dataset = generateDataset();
 
         BarRenderer3D barRenderer = new BarRenderer3D();
@@ -131,7 +134,7 @@ public class GenerateOpsPerSecChart
 
         Dimension dimensions = new Dimension( 1600, 900 );
         File chartFile = new File( outputFilename );
-        if ( alarm )
+        if ( performanceHasDegraded )
         {
             chart.setBackgroundPaint( Color.RED );
         }
@@ -139,10 +142,29 @@ public class GenerateOpsPerSecChart
                 (int) dimensions.getWidth(), (int) dimensions.getHeight() );
     }
 
+
+    private Stats detectDegradation( double threshold )
+    {
+        Stats latestRun = getLatestStats();
+        for ( Stats previous : data.headSet( latestRun ) )
+        {
+            double previousReads = previous.getAvgReadsPerSec();
+            double previousWrites = previous.getAvgWritePerSec();
+            if ( previousReads > latestRun.getAvgReadsPerSec()
+                                 * ( 1 + threshold )
+                    || previousWrites > latestRun.getAvgWritePerSec()
+                                     * ( 1 + threshold ) )
+            {
+                return previous;
+            }
+        }
+        return null;
+    }
+
+    
     private DefaultCategoryDataset generateDataset()
     {
         DefaultCategoryDataset dataSet = new DefaultCategoryDataset();
-        double currentMax = Double.MIN_VALUE;
 
         for ( Stats key : dataToDraw )
         {

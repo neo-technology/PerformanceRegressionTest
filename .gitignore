@@ -8,6 +8,7 @@ bin
 .idea/
 target
 ops-per-second
+performance.history
 *.iml
 *.ipr
 *.iws

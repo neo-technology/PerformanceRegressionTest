@@ -68,19 +68,50 @@ public class Main
          */
         myCase.run( db );
         db.shutdown();
+        
+        // 
+        // Handle test results
+        //
+        
         double[] results = myCase.getResults();
         String statsFileName = argz.get(GenerateOpsPerSecChart.OPS_PER_SECOND_FILE_ARG, "ops-per-second");
         String chartFilename = argz.get( GenerateOpsPerSecChart.CHART_FILE_ARG, "chart.png" );
         double threshold = Double.parseDouble( argz.get( "threshold", "0.05" ) );
-
+        
         appendNewStatsToFile(results, statsFileName);
-        produceChartIncludingHistoricalData(statsFileName, chartFilename, threshold);
-    }
-
-    private static void produceChartIncludingHistoricalData(String statsFileName, String chartFilename, double threshold) throws Exception {
-        GenerateOpsPerSecChart aggregator = new GenerateOpsPerSecChart(
-                statsFileName, chartFilename, threshold );
+        
+        GenerateOpsPerSecChart aggregator = new GenerateOpsPerSecChart(statsFileName, chartFilename, threshold );
+        
         aggregator.process();
+        aggregator.generateChart();
+        if(aggregator.performanceHasDegraded()) {
+            Stats trumpStats = aggregator.getTrumpingStats();
+            Stats currentStats = aggregator.getLatestStats();
+
+            double trumpReads = trumpStats.getAvgReadsPerSec();
+            double trumpWrites = trumpStats.getAvgWritePerSec();
+
+            double currentReads = currentStats.getAvgReadsPerSec();
+            double currentWrites = currentStats.getAvgWritePerSec();
+            
+            System.out.println();
+            System.out.println("================ FAILURE ================");
+            System.out.println("Stastically significant performance degradation detected, see chart for comparison to older runs.");
+            System.out.println();
+            if(trumpReads > currentReads) {
+                System.out.println("Avg. read performance for " + trumpStats.getName() + " : " + trumpReads + " reads/second" );
+                System.out.println("Avg. read performance for now : " + currentReads + " reads/second" );
+                System.out.println();
+            }
+            if(trumpWrites > currentWrites) {
+                System.out.println("Avg. write performance for " + trumpStats.getName() + " : " + trumpWrites + " writes/second" );
+                System.out.println("Avg. write performance for now : " + currentWrites + " writes/second" );
+                System.out.println();
+            }
+            System.out.println("=========================================");
+            
+            System.exit(1);
+        }
     }
 
     private static void appendNewStatsToFile(double[] results, String statsFileName) throws FileNotFoundException {
