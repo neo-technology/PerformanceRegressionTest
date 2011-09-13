@@ -116,7 +116,7 @@ public class Main
 
     private static void appendNewStatsToFile(double[] results, String statsFileName) throws FileNotFoundException {
         Stats newStats = new Stats(
-                new SimpleDateFormat( "MM-dd-HH-mm" ).format( new Date() ) );
+                new SimpleDateFormat( "MM-dd HH:mm" ).format( new Date() ) );
         newStats.setAvgReadsPerSec( results[0] );
         newStats.setAvgWritePerSec( results[1] );
         newStats.setPeakReadsPerSec( results[2] );
