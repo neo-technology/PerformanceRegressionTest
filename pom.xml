@@ -8,7 +8,7 @@
 	<properties>
 		<neo-version>1.4-SNAPSHOT</neo-version>
 		<jvm-memory>768M</jvm-memory>
-		<run-main-class>Please supply it via argument</run-main-class>
+		<run-main-class>Please supply main class via argument</run-main-class>
 		<threshold/>
 		<tarToMail/>
 		<chart-file/>
@@ -70,6 +70,7 @@
 				</executions>
 				<configuration>
 					<executable>java</executable>
+					<workingDirectory>${project.build.directory}</workingDirectory>
 					<arguments>
 						<argument>-Xmx${jvm-memory}</argument>
 						<argument>-server</argument>
