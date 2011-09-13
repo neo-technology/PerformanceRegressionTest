@@ -7,13 +7,13 @@
 	</parent>
 
 	<properties>
-		<neo-version>1.4-SNAPSHOT</neo-version>
+		<neo-version>1.5-SNAPSHOT</neo-version>
 		<storage-folder>${basedir}/tarpit</storage-folder>
 		<jvm-memory>768M</jvm-memory>
 		<run-main-class>org.neo4j.bench.regression.main.Main</run-main-class>
 		<threshold />
 		<tarToMail />
-		<chart-file>chart.png</chart-file>
+		<chart-file>${project.build.directory}/chart.png</chart-file>
 		<ops-per-sec-file>${basedir}/performance.history</ops-per-sec-file>
 		<time-to-run />
 	</properties>
@@ -25,12 +25,7 @@
 	<dependencies>
 		<dependency>
 			<groupId>org.neo4j</groupId>
-			<artifactId>neo4j-kernel</artifactId>
-			<version>${neo-version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.neo4j</groupId>
-			<artifactId>neo4j-lucene-index</artifactId>
+			<artifactId>neo4j</artifactId>
 			<version>${neo-version}</version>
 		</dependency>
 		<dependency>
@@ -90,11 +85,14 @@
 							<arg value="-neo-version=${neo-version}" />
 							<arg value="-threshold=${threshold}" />
 							<arg value="-tarToMail=${tarToMail}" />
-							<arg value="-chart-file=${outfolder}/${chart-file}" />
+							<arg value="-chart-file=${chart-file}" />
 							<arg value="-ops-per-sec-file=${ops-per-sec-file}" />
 							<arg value="-time-to-run=${time-to-run}" />
 						</exec>
 
+						<!-- Move chart file into our outfolder (it may not be set to be outputted 
+							there) -->
+						<copy file="${chart-file}" todir="${outfolder}" />
 						<zip destfile="${outfolder}.zip" basedir="${outfolder}" />
 						<delete dir="${outfolder}" />
 
