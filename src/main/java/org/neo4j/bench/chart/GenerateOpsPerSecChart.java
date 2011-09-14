@@ -138,6 +138,7 @@ public class GenerateOpsPerSecChart
         {
             chart.setBackgroundPaint( Color.RED );
         }
+        System.out.println("Saving chart to " + chartFile.getAbsolutePath());
         ChartUtilities.saveChartAsPNG( chartFile, chart,
                 (int) dimensions.getWidth(), (int) dimensions.getHeight() );
     }

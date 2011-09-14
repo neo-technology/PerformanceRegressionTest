@@ -83,7 +83,9 @@ public class Main
         GenerateOpsPerSecChart aggregator = new GenerateOpsPerSecChart(statsFileName, chartFilename, threshold );
         
         aggregator.process();
+        
         aggregator.generateChart();
+        
         if(aggregator.performanceHasDegraded()) {
             Stats trumpStats = aggregator.getTrumpingStats();
             Stats currentStats = aggregator.getLatestStats();
