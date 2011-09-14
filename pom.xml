@@ -7,7 +7,7 @@
 	</parent>
 
 	<properties>
-		<neo-version>1.4-SNAPSHOT</neo-version>
+		<neo-version>1.5-SNAPSHOT</neo-version>
 		<storage-folder>${basedir}/tarpit</storage-folder>
 		<jvm-memory>768M</jvm-memory>
 		<run-main-class>org.neo4j.bench.regression.main.Main</run-main-class>
@@ -24,20 +24,9 @@
 	<artifactId>PerformanceRegressionTest</artifactId>
 
 	<dependencies>
-		<!-- dependency>
+		<dependency>
 			<groupId>org.neo4j</groupId>
 			<artifactId>neo4j</artifactId>
-			<version>${neo-version}</version>
-		</dependency-->
-		
-		<dependency>
-			<groupId>org.neo4j</groupId>
-			<artifactId>neo4j-kernel</artifactId>
-			<version>${neo-version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.neo4j</groupId>
-			<artifactId>neo4j-lucene-index</artifactId>
 			<version>${neo-version}</version>
 		</dependency>
 		<dependency>
