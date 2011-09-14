@@ -169,17 +169,17 @@ public class GenerateOpsPerSecChart
 
         for ( Stats key : dataToDraw )
         {
-            dataSet.addValue(key.getAvgReadsPerSec(), "reads", key.getName());
-            dataSet.addValue(key.getAvgWritePerSec(), "writes",
-                    key.getName());
-            dataSet.addValue(key.getPeakReadsPerSec(), "peak reads",
-                    key.getName());
-            dataSet.addValue(key.getPeakWritesPerSec(), "peak writes",
-                    key.getName());
-            dataSet.addValue(key.getSustainedReadsPerSec(), "sust reads",
-                    key.getName());
-            dataSet.addValue(key.getSustainedWritesPerSec(), "sust writes",
-                    key.getName());
+            dataSet.addValue(key.getAvgReadsPerSec(), key.getName(), "avg reads");
+            dataSet.addValue(key.getAvgWritePerSec(),
+                    key.getName(), "avg writes");
+            dataSet.addValue(key.getPeakReadsPerSec(),
+                    key.getName(), "peak reads");
+            dataSet.addValue(key.getPeakWritesPerSec(),
+                    key.getName(), "peak writes");
+            dataSet.addValue(key.getSustainedReadsPerSec(),
+                    key.getName(), "sust reads");
+            dataSet.addValue(key.getSustainedWritesPerSec(),
+                    key.getName(), "sust writes");
         }
         return dataSet;
     }

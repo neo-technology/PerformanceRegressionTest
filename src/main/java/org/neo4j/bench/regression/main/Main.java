@@ -77,8 +77,9 @@ public class Main
         String statsFileName = argz.get(GenerateOpsPerSecChart.OPS_PER_SECOND_FILE_ARG, "ops-per-second");
         String chartFilename = argz.get( GenerateOpsPerSecChart.CHART_FILE_ARG, "chart.png" );
         double threshold = Double.parseDouble( argz.get( "threshold", "0.05" ) );
+        String neoVersion = argz.get( "neo-version", "N/A");
         
-        appendNewStatsToFile(results, statsFileName);
+        appendNewStatsToFile(results, statsFileName, neoVersion);
         
         GenerateOpsPerSecChart aggregator = new GenerateOpsPerSecChart(statsFileName, chartFilename, threshold );
         
@@ -102,12 +103,12 @@ public class Main
             System.out.println();
             if(trumpReads > currentReads) {
                 System.out.println("Avg. read performance for " + trumpStats.getName() + " : " + trumpReads + " reads/second" );
-                System.out.println("Avg. read performance for now : " + currentReads + " reads/second" );
+                System.out.println("Avg. read performance for " + currentStats.getName() + " (now) : " + currentReads + " reads/second" );
                 System.out.println();
             }
             if(trumpWrites > currentWrites) {
                 System.out.println("Avg. write performance for " + trumpStats.getName() + " : " + trumpWrites + " writes/second" );
-                System.out.println("Avg. write performance for now : " + currentWrites + " writes/second" );
+                System.out.println("Avg. write performance for " + currentStats.getName() + " (now) : " + currentWrites + " writes/second" );
                 System.out.println();
             }
             System.out.println("=========================================");
@@ -116,9 +117,9 @@ public class Main
         }
     }
 
-    private static void appendNewStatsToFile(double[] results, String statsFileName) throws FileNotFoundException {
+    private static void appendNewStatsToFile(double[] results, String statsFileName, String neoVersion) throws FileNotFoundException {
         Stats newStats = new Stats(
-                new SimpleDateFormat( "MM-dd HH:mm" ).format( new Date() ) );
+                new SimpleDateFormat( "MM-dd HH:mm" ).format( new Date() ) + " [" + neoVersion + "]" );
         newStats.setAvgReadsPerSec( results[0] );
         newStats.setAvgWritePerSec( results[1] );
         newStats.setPeakReadsPerSec( results[2] );
