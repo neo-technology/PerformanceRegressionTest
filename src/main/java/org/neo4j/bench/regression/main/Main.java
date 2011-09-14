@@ -19,6 +19,7 @@
  */
 package org.neo4j.bench.regression.main;
 
+
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
@@ -32,8 +33,10 @@ import org.neo4j.bench.cases.mixedload.Stats;
 import org.neo4j.bench.chart.GenerateOpsPerSecChart;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.helpers.Args;
+import org.neo4j.jmx.Kernel;
 import org.neo4j.kernel.Config;
 import org.neo4j.kernel.EmbeddedGraphDatabase;
+import org.neo4j.kernel.KernelExtension;
 
 /* @SuppressWarnings( "restriction" ) // for the signal */
 public class Main
@@ -44,7 +47,7 @@ public class Main
         long timeToRun = Long.parseLong( argz.get( "time-to-run", "120" ) );  // Time in minutes
         Map<String, String> props = new HashMap<String, String>();
         props.put( Config.USE_MEMORY_MAPPED_BUFFERS, "true" );
-        final GraphDatabaseService db = new EmbeddedGraphDatabase( "db" );
+        final EmbeddedGraphDatabase db = new EmbeddedGraphDatabase( "db" );
         final MixedLoadBenchCase myCase = new MixedLoadBenchCase( timeToRun );
         /*
          * Commented out because it breaks windows but it is nice to have for
@@ -77,7 +80,7 @@ public class Main
         String statsFileName = argz.get(GenerateOpsPerSecChart.OPS_PER_SECOND_FILE_ARG, "ops-per-second");
         String chartFilename = argz.get( GenerateOpsPerSecChart.CHART_FILE_ARG, "chart.png" );
         double threshold = Double.parseDouble( argz.get( "threshold", "0.05" ) );
-        String neoVersion = argz.get( "neo-version", "N/A");
+        String neoVersion = db.getSingleManagementBean(Kernel.class).getKernelVersion();
         
         appendNewStatsToFile(results, statsFileName, neoVersion);
         

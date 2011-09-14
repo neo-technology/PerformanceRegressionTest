@@ -76,7 +76,6 @@
 							<arg value="-classpath" />
 							<arg value="${classpath}" />
 							<arg value="${run-main-class}" />
-							<arg value="-neo-version=${neo-version}" />
 							<arg value="-threshold=${threshold}" />
 							<arg value="-tarToMail=${tarToMail}" />
 							<arg value="-chart-file=${chart-file}" />
