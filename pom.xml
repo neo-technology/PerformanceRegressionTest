@@ -8,6 +8,7 @@
 
 	<properties>
 		<neo-version>1.5-SNAPSHOT</neo-version>
+		<neo-version-name>${neo-version}</neo-version-name>
 		<storage-folder>${basedir}/tarpit</storage-folder>
 		<jvm-memory>768M</jvm-memory>
 		<run-main-class>org.neo4j.bench.regression.main.Main</run-main-class>
@@ -26,7 +27,7 @@
 	<dependencies>
 		<dependency>
 			<groupId>org.neo4j</groupId>
-			<artifactId>neo4j</artifactId>
+			<artifactId>neo4j-community</artifactId>
 			<version>${neo-version}</version>
 		</dependency>
 		<dependency>
@@ -77,6 +78,7 @@
 							<arg value="${classpath}" />
 							<arg value="${run-main-class}" />
 							<arg value="-threshold=${threshold}" />
+							<arg value="-neo4j-version=${neo-version-name}" />
 							<arg value="-tarToMail=${tarToMail}" />
 							<arg value="-chart-file=${chart-file}" />
 							<arg value="-ops-per-sec-file=${ops-per-sec-file}" />

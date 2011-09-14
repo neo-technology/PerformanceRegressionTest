@@ -26,7 +26,10 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -57,7 +60,6 @@ public class GenerateOpsPerSecChart
     // If performance has degraded, store the stats that trumped current performance here.
     private Stats trumpingStats; 
     private final SortedSet<Stats> data;
-    private Set<Stats> dataToDraw;
     private final double threshold;
     private boolean hasProcessed = false;
 
@@ -72,20 +74,6 @@ public class GenerateOpsPerSecChart
 
     public void process() throws Exception
     {
-        if ( data.size() > TESTS_TO_DRAW )
-        {
-            Iterator<Stats> it = data.iterator();
-            int i = 0;
-            while ( data.size() - i++ > TESTS_TO_DRAW )
-            {
-                it.next();
-            }
-            dataToDraw = data.tailSet( it.next() );
-        }
-        else
-        {
-            dataToDraw = data;
-        }
         
         trumpingStats = detectDegradation( threshold );
         performanceHasDegraded = trumpingStats != null;
@@ -165,6 +153,29 @@ public class GenerateOpsPerSecChart
     
     private DefaultCategoryDataset generateDataset()
     {
+        SortedSet<Stats> dataToDraw = new TreeSet<Stats>();
+        if ( data.size() > TESTS_TO_DRAW )
+        {
+            Iterator<Stats> it = data.iterator();
+            int i = 0;
+            while ( data.size() - i++ > TESTS_TO_DRAW )
+            {
+                it.next();
+            }
+            dataToDraw.addAll(data.subSet( it.next(), data.last() ));
+        }
+        else
+        {
+            dataToDraw.addAll(data.headSet(data.last()));
+        }
+        
+        if( performanceHasDegraded ) {
+            dataToDraw.add(trumpingStats);
+        }
+        
+        dataToDraw.add(data.last());
+        
+        
         DefaultCategoryDataset dataSet = new DefaultCategoryDataset();
 
         for ( Stats key : dataToDraw )

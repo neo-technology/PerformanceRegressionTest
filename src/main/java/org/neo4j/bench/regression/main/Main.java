@@ -31,12 +31,10 @@ import java.util.Map;
 import org.neo4j.bench.cases.mixedload.MixedLoadBenchCase;
 import org.neo4j.bench.cases.mixedload.Stats;
 import org.neo4j.bench.chart.GenerateOpsPerSecChart;
-import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.helpers.Args;
 import org.neo4j.jmx.Kernel;
 import org.neo4j.kernel.Config;
 import org.neo4j.kernel.EmbeddedGraphDatabase;
-import org.neo4j.kernel.KernelExtension;
 
 /* @SuppressWarnings( "restriction" ) // for the signal */
 public class Main
@@ -80,7 +78,7 @@ public class Main
         String statsFileName = argz.get(GenerateOpsPerSecChart.OPS_PER_SECOND_FILE_ARG, "ops-per-second");
         String chartFilename = argz.get( GenerateOpsPerSecChart.CHART_FILE_ARG, "chart.png" );
         double threshold = Double.parseDouble( argz.get( "threshold", "0.05" ) );
-        String neoVersion = db.getSingleManagementBean(Kernel.class).getKernelVersion();
+        String neoVersion = argz.get( "neo4j-version", "N/A" );
         
         appendNewStatsToFile(results, statsFileName, neoVersion);
         
