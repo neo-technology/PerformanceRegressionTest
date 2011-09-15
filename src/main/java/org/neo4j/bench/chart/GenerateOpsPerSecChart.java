@@ -160,20 +160,19 @@ public class GenerateOpsPerSecChart
             int i = 0;
             while ( data.size() - i++ > TESTS_TO_DRAW )
             {
-                it.next();
+                Stats toSkip = it.next();
+                if(toSkip == trumpingStats) {
+                    // Always include any stats that are currently
+                    // trumping our latest stats.
+                    dataToDraw.add(toSkip);
+                }
             }
-            dataToDraw.addAll(data.subSet( it.next(), data.last() ));
+            dataToDraw.addAll(data.tailSet( it.next() ));
         }
         else
         {
-            dataToDraw.addAll(data.headSet(data.last()));
+            dataToDraw.addAll(data);
         }
-        
-        if( performanceHasDegraded ) {
-            dataToDraw.add(trumpingStats);
-        }
-        
-        dataToDraw.add(data.last());
         
         
         DefaultCategoryDataset dataSet = new DefaultCategoryDataset();
