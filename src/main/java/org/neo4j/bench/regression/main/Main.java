@@ -19,7 +19,6 @@
  */
 package org.neo4j.bench.regression.main;
 
-
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
@@ -27,14 +26,12 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-
 import org.neo4j.bench.cases.mixedload.MixedLoadBenchCase;
 import org.neo4j.bench.cases.mixedload.Stats;
 import org.neo4j.bench.chart.GenerateOpsPerSecChart;
 import org.neo4j.helpers.Args;
-import org.neo4j.jmx.Kernel;
-import org.neo4j.kernel.Config;
 import org.neo4j.kernel.EmbeddedGraphDatabase;
+import org.neo4j.kernel.configuration.Config;
 
 /* @SuppressWarnings( "restriction" ) // for the signal */
 public class Main
