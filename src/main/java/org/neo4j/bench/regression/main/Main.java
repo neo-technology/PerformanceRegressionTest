@@ -19,6 +19,7 @@
  */
 package org.neo4j.bench.regression.main;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
@@ -40,9 +41,9 @@ public class Main
     {
         Args argz = new Args( args );
         long timeToRun = Long.parseLong( argz.get( "time-to-run", "120" ) );  // Time in minutes
-        Map<String, String> props = new HashMap<String, String>();
+        Map<String, String> props = EmbeddedGraphDatabase.loadConfigurations( "../config.props" );
         props.put( Config.USE_MEMORY_MAPPED_BUFFERS, "true" );
-        final EmbeddedGraphDatabase db = new EmbeddedGraphDatabase( "db" );
+        final EmbeddedGraphDatabase db = new EmbeddedGraphDatabase( "db", props );
         final MixedLoadBenchCase myCase = new MixedLoadBenchCase( timeToRun );
         /*
          * Commented out because it breaks windows but it is nice to have for
