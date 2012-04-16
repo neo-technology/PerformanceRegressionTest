@@ -30,9 +30,11 @@ import java.util.Map;
 import org.neo4j.bench.cases.mixedload.MixedLoadBenchCase;
 import org.neo4j.bench.cases.mixedload.Stats;
 import org.neo4j.bench.chart.GenerateOpsPerSecChart;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.factory.GraphDatabaseFactory;
+import org.neo4j.graphdb.factory.GraphDatabaseSetting;
+import org.neo4j.graphdb.factory.GraphDatabaseSettings;
 import org.neo4j.helpers.Args;
-import org.neo4j.kernel.EmbeddedGraphDatabase;
-import org.neo4j.kernel.configuration.Config;
 
 /* @SuppressWarnings( "restriction" ) // for the signal */
 public class Main
@@ -41,9 +43,12 @@ public class Main
     {
         Args argz = new Args( args );
         long timeToRun = Long.parseLong( argz.get( "time-to-run", "120" ) );  // Time in minutes
-        Map<String, String> props = EmbeddedGraphDatabase.loadConfigurations( "../config.props" );
-        props.put( Config.USE_MEMORY_MAPPED_BUFFERS, "true" );
-        final EmbeddedGraphDatabase db = new EmbeddedGraphDatabase( "db", props );
+        Map<String, String> props = new HashMap<String, String>();
+        props.put( GraphDatabaseSettings.use_memory_mapped_buffers.name(), GraphDatabaseSetting.TRUE );
+        final GraphDatabaseService db = new GraphDatabaseFactory().newEmbeddedDatabaseBuilder( "db" ).
+            setConfig( GraphDatabaseSettings.use_memory_mapped_buffers, GraphDatabaseSetting.TRUE ).
+            loadPropertiesFromFile( "../config.props" ).
+            newGraphDatabase();
         final MixedLoadBenchCase myCase = new MixedLoadBenchCase( timeToRun );
         /*
          * Commented out because it breaks windows but it is nice to have for
