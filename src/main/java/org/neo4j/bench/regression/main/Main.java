@@ -19,7 +19,6 @@
  */
 package org.neo4j.bench.regression.main;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
@@ -27,6 +26,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+
 import org.neo4j.bench.cases.mixedload.MixedLoadBenchCase;
 import org.neo4j.bench.cases.mixedload.Stats;
 import org.neo4j.bench.chart.GenerateOpsPerSecChart;
@@ -100,10 +100,10 @@ public class Main
 
             double currentReads = currentStats.getAvgReadsPerSec();
             double currentWrites = currentStats.getAvgWritePerSec();
-            
+
             System.out.println();
             System.out.println("================ FAILURE ================");
-            System.out.println("Stastically significant performance degradation detected, see chart for comparison to older runs.");
+            System.out.println( "Statistically significant performance degradation detected, see chart for comparison to older runs." );
             System.out.println();
             if(trumpReads > currentReads) {
                 System.out.println("Avg. read performance for " + trumpStats.getName() + " : " + trumpReads + " reads/second" );
@@ -116,7 +116,7 @@ public class Main
                 System.out.println();
             }
             System.out.println("=========================================");
-            
+
             System.exit(1);
         }
     }

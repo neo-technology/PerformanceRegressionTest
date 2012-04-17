@@ -50,11 +50,13 @@ import org.neo4j.graphdb.Node;
  */
 public class MixedLoadBenchCase
 {
-    private enum WorkerType
+    private static enum WorkerType
     {
         SIMPLE,
         BULK
     }
+
+    private static final int PrintEvery = 500;
 
     // Keeps the list of simple workers futures
     private final List<Future<int[]>> simpleTasks;
@@ -189,7 +191,7 @@ public class MixedLoadBenchCase
                     gatherUp( simpleTasks, WorkerType.SIMPLE, false );
                     Thread.sleep( 100 );
                 }
-                if ( print++ % 20 == 0 )
+                if ( print++ % PrintEvery == 0 )
                     printOutResults( "Intermediate results for simple" );
             }
             catch ( InterruptedException e )
@@ -236,7 +238,7 @@ public class MixedLoadBenchCase
                     gatherUp( bulkTasks, WorkerType.BULK, false );
                     Thread.sleep( 100 );
                 }
-                if ( print++ % 20 == 0 )
+                if ( print++ % PrintEvery == 0 )
                     printOutResults( "Intermediate results for Bulk" );
             }
             catch ( InterruptedException e )
