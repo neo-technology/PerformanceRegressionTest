@@ -12,3 +12,4 @@ performance.history
 *.iml
 *.ipr
 *.iws
+.externalToolBuilders/
