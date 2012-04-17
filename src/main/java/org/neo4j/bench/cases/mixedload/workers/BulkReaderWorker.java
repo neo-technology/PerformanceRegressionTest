@@ -70,6 +70,11 @@ public class BulkReaderWorker implements Callable<int[]>
                 catch (Exception e)
                 {
                     e.printStackTrace();
+                    if ( e instanceof NullPointerException )
+                    {
+                        // most likely the database has been shutdown
+                        throw e;
+                    }
                 }
             }
         }

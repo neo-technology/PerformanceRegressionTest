@@ -42,7 +42,7 @@ public class Main
     public static void main( String[] args ) throws Exception
     {
         Args argz = new Args( args );
-        long timeToRun = Long.parseLong( argz.get( "time-to-run", "120" ) );  // Time in minutes
+        long timeToRun = Long.parseLong( argz.get( "time-to-run", "30" ) ); /* Time in minutes */
         Map<String, String> props = new HashMap<String, String>();
         props.put( GraphDatabaseSettings.use_memory_mapped_buffers.name(), GraphDatabaseSetting.TRUE );
         final GraphDatabaseService db = new GraphDatabaseFactory().newEmbeddedDatabaseBuilder( "db" ).
@@ -72,25 +72,25 @@ public class Main
          */
         myCase.run( db );
         db.shutdown();
-        
-        // 
+
+        //
         // Handle test results
         //
-        
+
         double[] results = myCase.getResults();
         String statsFileName = argz.get(GenerateOpsPerSecChart.OPS_PER_SECOND_FILE_ARG, "ops-per-second");
         String chartFilename = argz.get( GenerateOpsPerSecChart.CHART_FILE_ARG, "chart.png" );
-        double threshold = Double.parseDouble( argz.get( "threshold", "0.05" ) );
+        double threshold = Double.parseDouble( argz.get( "threshold", "0.1" ) );
         String neoVersion = argz.get( "neo4j-version", "N/A" );
-        
+
         appendNewStatsToFile(results, statsFileName, neoVersion);
-        
+
         GenerateOpsPerSecChart aggregator = new GenerateOpsPerSecChart(statsFileName, chartFilename, threshold );
-        
+
         aggregator.process();
-        
+
         aggregator.generateChart();
-        
+
         if(aggregator.performanceHasDegraded()) {
             Stats trumpStats = aggregator.getTrumpingStats();
             Stats currentStats = aggregator.getLatestStats();

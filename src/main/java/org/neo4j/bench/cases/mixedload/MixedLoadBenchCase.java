@@ -113,8 +113,8 @@ public class MixedLoadBenchCase
         // Outside of measured stuff, just to populate the db
         try
         {
-            new BulkCreateWorker( graphDb, nodes, 100000 ).call();
-            new PropertyAddWorker( graphDb, nodes, 10000, true ).call();
+            new BulkCreateWorker( graphDb, nodes, 25000 ).call();
+            new PropertyAddWorker( graphDb, nodes, 2500, true ).call();
         }
         catch ( Exception e )
         {
