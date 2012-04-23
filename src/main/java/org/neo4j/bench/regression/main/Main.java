@@ -31,10 +31,6 @@ import java.util.Map;
 import org.neo4j.bench.cases.mixedload.MixedLoadBenchCase;
 import org.neo4j.bench.cases.mixedload.Stats;
 import org.neo4j.bench.chart.GenerateOpsPerSecChart;
-import org.neo4j.helpers.Args;
-import org.neo4j.jmx.Kernel;
-import org.neo4j.kernel.Config;
-import org.neo4j.kernel.EmbeddedGraphDatabase;
 
 /* @SuppressWarnings( "restriction" ) // for the signal */
 public class Main
@@ -80,20 +76,11 @@ public class Main
         String chartFilename = argz.get( GenerateOpsPerSecChart.CHART_FILE_ARG, "chart.png" );
         double threshold = Double.parseDouble( argz.get( "threshold", "0.05" ) );
         String neoVersion = argz.get( "neo4j-version", "N/A" );
-<<<<<<< HEAD
-        
-        appendNewStatsToFile(results, statsFileName, neoVersion);
-        
-        GenerateOpsPerSecChart aggregator = new GenerateOpsPerSecChart(statsFileName, chartFilename, threshold );
-        
-=======
         boolean onlyCompareToGAReleases = Boolean.parseBoolean( argz.get( "only-compare-to-ga", "true" ) ); /* Compare performance only to GA releases */
 
         appendNewStatsToFile(results, statsFileName, neoVersion);
 
         GenerateOpsPerSecChart aggregator = new GenerateOpsPerSecChart(statsFileName, chartFilename, threshold, onlyCompareToGAReleases );
-
->>>>>>> 92d75b6... Tests now optionally only compare latest run with GA releases, on by default.
         aggregator.process();
         
         aggregator.generateChart();
