@@ -175,4 +175,20 @@ public class Stats implements Comparable<Stats>
         result.sustainedWritesPerSec = sustainedWrites;
         return result;
     }
+
+    public boolean isGARelease()
+    {
+        String version = getVersion().toLowerCase();
+        return !version.contains("-snapshot") && !version.contains("m") && !version.contains("rc") && !version.equals("n/a");
+    }
+    
+    private String getVersion() {
+        // 03-12 06:12 [1.7-SNAPSHOT]
+        String [] parts = name.split("\\[");
+        if(parts.length == 2) {
+            String version = parts[1].substring(0, parts[1].length() - 1);
+            return version;
+        }
+        return "N/A";
+    }
 }

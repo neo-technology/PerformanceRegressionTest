@@ -42,7 +42,8 @@ public class Main
     public static void main( String[] args ) throws Exception
     {
         Args argz = new Args( args );
-        long timeToRun = Long.parseLong( argz.get( "time-to-run", "30" ) ); /* Time in minutes */
+        long timeToRun = Long.parseLong( argz.get( "time-to-run", "3" ) ); /* Time in minutes */
+        
         Map<String, String> props = new HashMap<String, String>();
         props.put( GraphDatabaseSettings.use_memory_mapped_buffers.name(), GraphDatabaseSetting.TRUE );
         final GraphDatabaseService db = new GraphDatabaseFactory().newEmbeddedDatabaseBuilder( "db" ).
@@ -50,6 +51,7 @@ public class Main
             loadPropertiesFromFile( "../config.props" ).
             newGraphDatabase();
         final MixedLoadBenchCase myCase = new MixedLoadBenchCase( timeToRun );
+        
         /*
          * Commented out because it breaks windows but it is nice to have for
          * testing on real OSes
@@ -82,10 +84,11 @@ public class Main
         String chartFilename = argz.get( GenerateOpsPerSecChart.CHART_FILE_ARG, "chart.png" );
         double threshold = Double.parseDouble( argz.get( "threshold", "0.1" ) );
         String neoVersion = argz.get( "neo4j-version", "N/A" );
+        boolean onlyCompareToGAReleases = Boolean.parseBoolean( argz.get( "only-compare-to-ga", "true" ) ); /* Compare performance only to GA releases */
 
         appendNewStatsToFile(results, statsFileName, neoVersion);
 
-        GenerateOpsPerSecChart aggregator = new GenerateOpsPerSecChart(statsFileName, chartFilename, threshold );
+        GenerateOpsPerSecChart aggregator = new GenerateOpsPerSecChart(statsFileName, chartFilename, threshold, onlyCompareToGAReleases );
 
         aggregator.process();
 

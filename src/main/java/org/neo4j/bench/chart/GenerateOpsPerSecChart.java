@@ -60,12 +60,12 @@ public class GenerateOpsPerSecChart
     private boolean hasProcessed = false;
 
     public GenerateOpsPerSecChart( String inputFilename, String outputFilename,
-            double threshold )
+            double threshold, boolean onlyCompareToGAReleases )
     {
         this.inputFilename = inputFilename;
         this.outputFilename = outputFilename;
         this.threshold = threshold;
-        data = loadOpsPerSecond( this.inputFilename );
+        data = loadOpsPerSecond( this.inputFilename, onlyCompareToGAReleases );
     }
 
     public void process() throws Exception
@@ -194,7 +194,7 @@ public class GenerateOpsPerSecChart
      * Opens the operations per second file, reads in the contents and creates a
      * SortedSet of the therein stored Stats.
      */
-    public static SortedSet<Stats> loadOpsPerSecond( String fileName )
+    public static SortedSet<Stats> loadOpsPerSecond( String fileName, boolean onlyCompareToGAReleases )
     {
         File dataFile = new File( fileName );
         if ( !dataFile.exists() )
@@ -203,7 +203,7 @@ public class GenerateOpsPerSecChart
         }
         BufferedReader reader = null;
         SortedSet<Stats> result = new TreeSet<Stats>();
-        Stats currentStat;
+        Stats currentStat = null;
         try
         {
             reader = new BufferedReader( new FileReader( dataFile ) );
@@ -211,10 +211,15 @@ public class GenerateOpsPerSecChart
             while ( ( line = reader.readLine() ) != null )
             {
                 currentStat = Stats.parse( line );
-                if ( currentStat != null )
+                if ( currentStat != null && (!onlyCompareToGAReleases || currentStat.isGARelease()))
                 {
                     result.add( currentStat );
                 }
+            }
+            
+            // Add the latest result, even if it was not a GA
+            if(currentStat != null && !currentStat.isGARelease()) {
+                result.add(currentStat);
             }
         }
         catch ( IOException e )
