@@ -42,7 +42,7 @@ public class Main
     public static void main( String[] args ) throws Exception
     {
         Args argz = new Args( args );
-        long timeToRun = Long.parseLong( argz.get( "time-to-run", "3" ) ); /* Time in minutes */
+        long timeToRun = Long.parseLong( argz.get( "time-to-run", "30" ) ); /* Time in minutes */
         
         Map<String, String> props = new HashMap<String, String>();
         props.put( GraphDatabaseSettings.use_memory_mapped_buffers.name(), GraphDatabaseSetting.TRUE );
