@@ -78,7 +78,7 @@ public class Main
         myCase.run( db );
 
         db.shutdown();
-        ConsistencyCheck.main("db");
+
 
         //
         // Handle test results
@@ -98,6 +98,7 @@ public class Main
         aggregator.process();
 
         aggregator.generateChart();
+        ConsistencyCheck.main("db");
 
         if(aggregator.performanceHasDegraded()) {
             Stats trumpStats = aggregator.getTrumpingStats();
