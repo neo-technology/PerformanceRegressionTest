@@ -27,6 +27,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.neo4j.backup.check.ConsistencyCheck;
 import org.neo4j.bench.cases.mixedload.MixedLoadBenchCase;
 import org.neo4j.bench.cases.mixedload.Stats;
 import org.neo4j.bench.chart.GenerateOpsPerSecChart;
@@ -35,6 +36,8 @@ import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.neo4j.graphdb.factory.GraphDatabaseSetting;
 import org.neo4j.graphdb.factory.GraphDatabaseSettings;
 import org.neo4j.helpers.Args;
+
+import static org.neo4j.backup.check.ConsistencyCheck.*;
 
 /* @SuppressWarnings( "restriction" ) // for the signal */
 public class Main
@@ -73,7 +76,9 @@ public class Main
         Signal.handle( signal, handler );
          */
         myCase.run( db );
+
         db.shutdown();
+        ConsistencyCheck.main("db");
 
         //
         // Handle test results
