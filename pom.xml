@@ -7,7 +7,7 @@
 	</parent>
 
 	<properties>
-		<neo-version>1.8-SNAPSHOT</neo-version>
+		<neo-version>1.7.3-SNAPSHOT</neo-version>
 		<neo-version-name>${neo-version}</neo-version-name>
 		<storage-folder>${basedir}/tarpit</storage-folder>
 		<jvm-memory>768M</jvm-memory>
