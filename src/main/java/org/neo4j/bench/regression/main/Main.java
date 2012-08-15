@@ -45,7 +45,7 @@ public class Main
     public static void main( String[] args ) throws Exception
     {
         Args argz = new Args( args );
-        long timeToRun = Long.parseLong( argz.get( "time-to-run", "30" ) ); /* Time in minutes */
+        long timeToRun = Long.parseLong( argz.get( "time-to-run", "60" ) ); /* Time in minutes */
         
         Map<String, String> props = new HashMap<String, String>();
         props.put( GraphDatabaseSettings.use_memory_mapped_buffers.name(), GraphDatabaseSetting.TRUE );
@@ -93,11 +93,15 @@ public class Main
 
         appendNewStatsToFile(results, statsFileName, neoVersion);
 
-        GenerateOpsPerSecChart aggregator = new GenerateOpsPerSecChart(statsFileName, chartFilename, threshold, onlyCompareToGAReleases );
-
-        aggregator.process();
-
-        aggregator.generateChart();
+        GenerateOpsPerSecChart aggregator = null;
+        try {
+            aggregator = new GenerateOpsPerSecChart(statsFileName, chartFilename, threshold, onlyCompareToGAReleases );
+            aggregator.process();
+            aggregator.generateChart();
+        } catch (NoClassDefFoundError e) {
+            System.out.println("Couldn't generate chart, as there's no X server");
+            e.printStackTrace();
+        }
         ConsistencyCheck.main("db");
 
         if(aggregator.performanceHasDegraded()) {
