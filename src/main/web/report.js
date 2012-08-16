@@ -11,7 +11,7 @@ d3.tsv("data.tsv", function(data) {
 
     function buildTime(d)
     {
-        return d["build time"];
+        return d["build"];
     }
 
     var measurements = data.map(function(build) {
