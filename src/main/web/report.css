@@ -1,0 +1,48 @@
+/*
+ * Copyright (C) 2012 Neo Technology
+ * All rights reserved
+ */
+h1, h2, h3, h4, h5, h6
+{
+    font-family: Candara, Myriad Pro, Myriad, "Lucida Sans","Trebuchet MS",sans-serif;
+}
+
+.results-container
+{
+    overflow: hidden;
+}
+
+.operation
+{
+    float: left;
+}
+
+.axis path, .axis line
+{
+    stroke: black;
+    stroke-width: 1px;
+    fill: none;
+}
+
+circle.measurement
+{
+    fill: blue;
+}
+
+text
+{
+    font-family: sans-serif;
+    font-size: 15px;
+}
+
+text.axis-label
+{
+    text-anchor: middle;
+    alignment-baseline: central;
+}
+
+.tooltip
+{
+    text-anchor: middle;
+}
+
