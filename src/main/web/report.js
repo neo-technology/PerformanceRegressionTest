@@ -41,7 +41,7 @@ d3.tsv("data.tsv", function(data) {
         return a.concat(b);
     });
 
-    var chartWidth = 400, chartHeight = 300, margin = 300;
+    var chartWidth = 1024, chartHeight = 768, margin = 300;
 
     var chart = d3.select("div.results-container").selectAll("svg.chart" )
         .data([true])
