@@ -19,7 +19,6 @@
  */
 package org.neo4j.bench.cases.mixedload;
 
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -34,6 +33,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.neo4j.bench.cases.CaseResult;
 import org.neo4j.bench.cases.mixedload.workers.BulkCreateWorker;
 import org.neo4j.bench.cases.mixedload.workers.BulkReaderWorker;
 import org.neo4j.bench.cases.mixedload.workers.CreateWorker;
@@ -90,24 +90,14 @@ public class MixedLoadBenchCase
         writeTasksExecuted = 0;
     }
 
-    public double[] getResults()
-    {
-        double[] totals = new double[6];
-        totals[0] = totalReads * 1.0 / ( concurrentFinishTime - startTime );
-        totals[1] = totalWrites * 1.0 / ( concurrentFinishTime - startTime );
-        totals[2] = peakReads;
-        totals[3] = peakWrites;
-        totals[4] = sustainedReads;
-        totals[5] = sustainedWrites;
-        return Arrays.copyOf( totals, totals.length );
-    }
+
 
     public Queue<Node> getNodeQueue()
     {
         return nodes;
     }
 
-    public void run( GraphDatabaseService graphDb )
+    public CaseResult run( GraphDatabaseService graphDb )
     {
         Random r = new Random();
         // Outside of measured stuff, just to populate the db
@@ -128,6 +118,8 @@ public class MixedLoadBenchCase
         runBulkLoad( graphDb, r );
 
         printOutResults( "Final results" );
+
+        return createResults();
     }
 
     private void runConcurrentLoad( GraphDatabaseService graphDb, Random r )
@@ -356,6 +348,15 @@ public class MixedLoadBenchCase
 
             }
         }
+    }
+
+    private CaseResult createResults()
+    {
+        double avgReads  = totalReads * 1.0 / ( concurrentFinishTime - startTime );
+        double avgWrites = totalWrites * 1.0 / ( concurrentFinishTime - startTime );
+
+        return new CaseResult( "Current"/* <- Hack, name should be the name of the benchmark case being run. This is set to 'Current' because it shows up as the chart label. Refactor. */,
+                avgReads, avgWrites, peakReads, peakWrites, sustainedReads, sustainedWrites );
     }
 
     private void printOutResults( String header )

@@ -19,64 +19,51 @@
  */
 package org.neo4j.bench.regression.main;
 
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.PrintStream;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.SortedSet;
 
 import org.neo4j.backup.check.ConsistencyCheck;
+import org.neo4j.bench.cases.CaseResult;
 import org.neo4j.bench.cases.mixedload.MixedLoadBenchCase;
-import org.neo4j.bench.cases.mixedload.Stats;
-import org.neo4j.bench.chart.GenerateOpsPerSecChart;
+import org.neo4j.bench.chart.ChartGenerator;
+import org.neo4j.bench.regression.RegressionDetector;
+import org.neo4j.bench.regression.PerformanceHistoryRepository;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.neo4j.graphdb.factory.GraphDatabaseSetting;
 import org.neo4j.graphdb.factory.GraphDatabaseSettings;
 import org.neo4j.helpers.Args;
 
-import static org.neo4j.backup.check.ConsistencyCheck.*;
-
 /* @SuppressWarnings( "restriction" ) // for the signal */
 public class Main
 {
+
+    public static final String OPS_PER_SECOND_FILE_ARG = "ops-per-sec-file";
+    public static final String CHART_FILE_ARG = "chart-file";
+
     public static void main( String[] args ) throws Exception
     {
+        // Arguments
         Args argz = new Args( args );
         long timeToRun = Long.parseLong( argz.get( "time-to-run", "60" ) ); /* Time in minutes */
-        
-        Map<String, String> props = new HashMap<String, String>();
-        props.put( GraphDatabaseSettings.use_memory_mapped_buffers.name(), GraphDatabaseSetting.TRUE );
-        final GraphDatabaseService db = new GraphDatabaseFactory().newEmbeddedDatabaseBuilder( "db" ).
-            setConfig( GraphDatabaseSettings.use_memory_mapped_buffers, GraphDatabaseSetting.TRUE ).
-            loadPropertiesFromFile( "../config.props" ).
-            newGraphDatabase();
+        String chartFilename = argz.get( CHART_FILE_ARG, "chart.png" );
+        double threshold = Double.parseDouble( argz.get( "threshold", "0.1" ) );
+        String neoVersion = argz.get( "neo4j-version", "N/A" );
+        boolean onlyCompareToGAReleases = Boolean.parseBoolean( argz.get( "only-compare-to-ga", "true" ) ); /* Compare performance only to GA releases */
+
+        // Components
+        final GraphDatabaseService db = createDb();
+        PerformanceHistoryRepository history = new PerformanceHistoryRepository(argz.get(OPS_PER_SECOND_FILE_ARG, "ops-per-second"));
+        RegressionDetector regressionDetector = new RegressionDetector();
+
+        // Benchmark
         final MixedLoadBenchCase myCase = new MixedLoadBenchCase( timeToRun );
-        
-        /*
-         * Commented out because it breaks windows but it is nice to have for
-         * testing on real OSes
-        SignalHandler handler = new SignalHandler()
-        {
-            @Override
-            public void handle( Signal arg0 )
-            {
-                System.out.println( "Queued nodes currently : "
-                        + myCase.getNodeQueue().size() );
-            }
-        };
-        // SIGUSR1 is used by the JVM and INT, ABRT and friends
-        // are all defined for specific usage by POSIX. While SIGINT
-        // is conveniently issued by Ctrl-C, SIGUSR2 is for user defined
-        // behavior so this is what I use.
 
-        Signal signal = new Signal( "USR2" );
-        Signal.handle( signal, handler );
-         */
-        myCase.run( db );
+        CaseResult currentResult = myCase.run( db );
 
+        // Cleanup
         db.shutdown();
 
 
@@ -84,48 +71,48 @@ public class Main
         // Handle test results
         //
 
-        double[] results = myCase.getResults();
-        String statsFileName = argz.get(GenerateOpsPerSecChart.OPS_PER_SECOND_FILE_ARG, "ops-per-second");
-        String chartFilename = argz.get( GenerateOpsPerSecChart.CHART_FILE_ARG, "chart.png" );
-        double threshold = Double.parseDouble( argz.get( "threshold", "0.1" ) );
-        String neoVersion = argz.get( "neo4j-version", "N/A" );
-        boolean onlyCompareToGAReleases = Boolean.parseBoolean( argz.get( "only-compare-to-ga", "true" ) ); /* Compare performance only to GA releases */
+        currentResult.setNeoVersion( neoVersion );
+        currentResult.setDate( new Date() );
 
-        appendNewStatsToFile(results, statsFileName, neoVersion);
+        CaseResult trumpingResult = regressionDetector.detectRegression( history, currentResult, threshold, onlyCompareToGAReleases );
 
-        GenerateOpsPerSecChart aggregator = null;
-        try {
-            aggregator = new GenerateOpsPerSecChart(statsFileName, chartFilename, threshold, onlyCompareToGAReleases );
-            aggregator.process();
-            aggregator.generateChart();
-        } catch (NoClassDefFoundError e) {
-            System.out.println("Couldn't generate chart, as there's no X server");
-            e.printStackTrace();
-        }
+        generateCharts(history, trumpingResult, currentResult, onlyCompareToGAReleases);
+
+        // Save our latest result
+        history.save( currentResult );
+
+        // Run a consistency check
         ConsistencyCheck.main("db");
 
-        if(aggregator.performanceHasDegraded()) {
-            Stats trumpStats = aggregator.getTrumpingStats();
-            Stats currentStats = aggregator.getLatestStats();
+        // And print out some failure info if we regressed.
+        if( trumpingResult != null) {
 
-            double trumpReads = trumpStats.getAvgReadsPerSec();
-            double trumpWrites = trumpStats.getAvgWritePerSec();
+            double trumpReads = trumpingResult.getAvgReadsPerSec();
+            double trumpWrites = trumpingResult.getAvgWritePerSec();
 
-            double currentReads = currentStats.getAvgReadsPerSec();
-            double currentWrites = currentStats.getAvgWritePerSec();
+            double currentReads = currentResult.getAvgReadsPerSec();
+            double currentWrites = currentResult.getAvgWritePerSec();
 
             System.out.println();
             System.out.println("================ FAILURE ================");
-            System.out.println( "Statistically significant performance degradation detected, see chart for comparison to older runs." );
             System.out.println();
             if(trumpReads > currentReads) {
-                System.out.println("Avg. read performance for " + trumpStats.getName() + " : " + trumpReads + " reads/second" );
-                System.out.println("Avg. read performance for " + currentStats.getName() + " (now) : " + currentReads + " reads/second" );
+                System.out.println("Degradation: Read performance between "+ trumpingResult.getNeoVersion() +" & " +
+                        currentResult.getNeoVersion() + " (now).");
+                System.out.println("  Avg. read performance for " + trumpingResult.getNeoVersion() + " : " + trumpReads + " reads/second." );
+                System.out.println("  Avg. read performance for " + currentResult.getNeoVersion() + " (now) : " + currentReads + " reads/second." );
+                System.out.println();
+                System.out.println("  Maximum difference allowed: ±" + trumpReads * threshold + " reads/second.");
+                System.out.println("  Actual difference detected:  " + (trumpReads - currentReads) + " reads/second." );
                 System.out.println();
             }
             if(trumpWrites > currentWrites) {
-                System.out.println("Avg. write performance for " + trumpStats.getName() + " : " + trumpWrites + " writes/second" );
-                System.out.println("Avg. write performance for " + currentStats.getName() + " (now) : " + currentWrites + " writes/second" );
+                System.out.println("Degradation: Write performance between "+ trumpingResult.getNeoVersion() +" & " + currentResult.getNeoVersion() + " (now).");
+                System.out.println("  Avg. write performance for " + trumpingResult.getNeoVersion() + " : " + trumpWrites + " writes/second." );
+                System.out.println("  Avg. write performance for " + currentResult.getNeoVersion() + " (now) : " + currentWrites + " writes/second." );
+                System.out.println();
+                System.out.println("  Maximum difference allowed: ±" + trumpWrites * threshold + " writes/second.");
+                System.out.println("  Actual difference detected:  " + (trumpWrites - currentReads) + " writes/second." );
                 System.out.println();
             }
             System.out.println("=========================================");
@@ -134,19 +121,47 @@ public class Main
         }
     }
 
-    private static void appendNewStatsToFile(double[] results, String statsFileName, String neoVersion) throws FileNotFoundException {
-        Stats newStats = new Stats(
-                new SimpleDateFormat( "MM-dd HH:mm" ).format( new Date() ) + " [" + neoVersion + "]" );
-        newStats.setAvgReadsPerSec( results[0] );
-        newStats.setAvgWritePerSec( results[1] );
-        newStats.setPeakReadsPerSec( results[2] );
-        newStats.setPeakWritesPerSec( results[3] );
-        newStats.setSustainedReadsPerSec( results[4] );
-        newStats.setSustainedWritesPerSec( results[5] );
+    private static void generateCharts(PerformanceHistoryRepository history, CaseResult trumpingResult, CaseResult currentResult, boolean onlyIncludeGA )
+    {
+        ChartGenerator chartGenerator = new ChartGenerator();
 
+        // Fetch results
+        SortedSet<CaseResult> results = onlyIncludeGA ? history.getResultsForGAReleases() : history.getAllResults();
+        results.add( currentResult );
 
-        PrintStream opsPerSecOutFile = new PrintStream( new FileOutputStream(
-                statsFileName, true ) );
-        newStats.write( opsPerSecOutFile, true );
+        chartGenerator.generateWritePerformanceChart( results, "perf.write.png" );
+        chartGenerator.generateReadPerformanceChart(  results, "perf.read.png" );
+
     }
+
+    private static GraphDatabaseService createDb()
+    {
+        Map<String, String> props = new HashMap<String, String>();
+        props.put( GraphDatabaseSettings.use_memory_mapped_buffers.name(), GraphDatabaseSetting.TRUE );
+        return new GraphDatabaseFactory().newEmbeddedDatabaseBuilder( "db" ).
+                setConfig( GraphDatabaseSettings.use_memory_mapped_buffers, GraphDatabaseSetting.TRUE ).
+                loadPropertiesFromFile( "../config.props" ).
+                newGraphDatabase();
+    }
+
+    /*
+    * Commented out because it breaks windows but it is nice to have for
+    * testing on real OSes
+   SignalHandler handler = new SignalHandler()
+   {
+       @Override
+       public void handle( Signal arg0 )
+       {
+           System.out.println( "Queued nodes currently : "
+                   + myCase.getNodeQueue().size() );
+       }
+   };
+   // SIGUSR1 is used by the JVM and INT, ABRT and friends
+   // are all defined for specific usage by POSIX. While SIGINT
+   // is conveniently issued by Ctrl-C, SIGUSR2 is for user defined
+   // behavior so this is what I use.
+
+   Signal signal = new Signal( "USR2" );
+   Signal.handle( signal, handler );
+    */
 }
