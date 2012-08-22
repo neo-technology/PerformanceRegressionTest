@@ -19,6 +19,7 @@
  */
 package org.neo4j.bench.regression.main;
 
+import java.text.DecimalFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -96,23 +97,24 @@ public class Main
             System.out.println();
             System.out.println("================ FAILURE ================");
             System.out.println();
-            if(trumpReads > currentReads) {
+            if(trumpReads > currentReads * (1 + threshold)) {
                 System.out.println("Degradation: Read performance between "+ trumpingResult.getNeoVersion() +" & " +
                         currentResult.getNeoVersion() + " (now).");
-                System.out.println("  Avg. read performance for " + trumpingResult.getNeoVersion() + " : " + trumpReads + " reads/second." );
-                System.out.println("  Avg. read performance for " + currentResult.getNeoVersion() + " (now) : " + currentReads + " reads/second." );
+                System.out.printf( "  Avg. read performance for %s : %.2f reads/second.\n",
+                        trumpingResult.getNeoVersion(), trumpReads );
+                System.out.printf( "  Avg. read performance for %s (now) : %.2f reads/second.\n", currentResult.getNeoVersion(), currentReads );
                 System.out.println();
-                System.out.println("  Maximum difference allowed: ±" + trumpReads * threshold + " reads/second.");
-                System.out.println("  Actual difference detected:  " + (trumpReads - currentReads) + " reads/second." );
+                System.out.printf( "  Maximum difference allowed: ±%.2f reads/second.\n", trumpReads * threshold );
+                System.out.printf( "  Actual difference detected:  %.2f reads/second.\n", trumpReads - currentReads );
                 System.out.println();
             }
-            if(trumpWrites > currentWrites) {
+            if(trumpWrites > currentWrites * (1 + threshold)) {
                 System.out.println("Degradation: Write performance between "+ trumpingResult.getNeoVersion() +" & " + currentResult.getNeoVersion() + " (now).");
-                System.out.println("  Avg. write performance for " + trumpingResult.getNeoVersion() + " : " + trumpWrites + " writes/second." );
-                System.out.println("  Avg. write performance for " + currentResult.getNeoVersion() + " (now) : " + currentWrites + " writes/second." );
+                System.out.printf( "  Avg. write performance for %s: %.2f writes/second.\n", trumpingResult.getNeoVersion(), trumpWrites );
+                System.out.printf( "  Avg. write performance for %s (now): %.2f writes/second.\n", currentResult.getNeoVersion(), currentWrites);
                 System.out.println();
-                System.out.println("  Maximum difference allowed: ±" + trumpWrites * threshold + " writes/second.");
-                System.out.println("  Actual difference detected:  " + (trumpWrites - currentReads) + " writes/second." );
+                System.out.printf( "  Maximum difference allowed: ±%.2f writes/second.\n", trumpWrites * threshold );
+                System.out.printf( "  Actual difference detected:  %.2f writes/second.\n", trumpWrites - currentWrites );
                 System.out.println();
             }
             System.out.println("=========================================");
