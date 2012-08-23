@@ -64,7 +64,7 @@ d3.tsv("data.tsv", function(data) {
         .data([true])
         .enter()
         .append("svg:svg")
-        .attr("class", "svg")
+        .attr("class", "chart")
         .attr("viewBox", [
             -margins.left,
             -margins.top,
@@ -93,7 +93,14 @@ d3.tsv("data.tsv", function(data) {
         .attr("transform", function(d, i) { return "translate(0," + i * (chartSize.height + margins.betweenCharts) + ")" });
 
 
-    chart.selectAll("circle.measurement")
+    chart.selectAll("text.scenario-name")
+        .data(function(scenario) { return [scenario]; })
+        .enter().append("svg:text")
+        .text(function(scenario) { return scenario; })
+        .attr("x", 40)
+        .attr("class", "scenario-name");
+
+     chart.selectAll("circle.measurement")
         .data(function(scenario) { return scenarioMeasurements[scenario]; })
         .enter()
         .append("svg:circle")
