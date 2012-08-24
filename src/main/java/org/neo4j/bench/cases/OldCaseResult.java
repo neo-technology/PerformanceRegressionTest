@@ -31,7 +31,7 @@ import java.util.StringTokenizer;
  * TODO: Make this a generic Benchmark statistics result, capable of containing one or more named metrics.
  *
  */
-public class CaseResult implements Comparable<CaseResult>
+public class OldCaseResult implements Comparable<OldCaseResult>
 {
     private final String name;
     private double avgReadsPerSec;
@@ -43,14 +43,14 @@ public class CaseResult implements Comparable<CaseResult>
     private String neoVersion;
     private Date date;
 
-    public CaseResult( String name )
+    public OldCaseResult( String name )
     {
         this.name = name;
     }
 
-    public CaseResult( String name, double avgReadsPerSec, double avgWritesPerSec,
-                       double peakReadsPerSec, double peakWritesPerSec,
-                       double sustainedReadsPerSec, double sustainedWritesPerSec )
+    public OldCaseResult( String name, double avgReadsPerSec, double avgWritesPerSec,
+                          double peakReadsPerSec, double peakWritesPerSec,
+                          double sustainedReadsPerSec, double sustainedWritesPerSec )
     {
         this.name = name;
         this.avgReadsPerSec = avgReadsPerSec;
@@ -127,7 +127,7 @@ public class CaseResult implements Comparable<CaseResult>
     }
 
     @Override
-    public int compareTo( CaseResult o )
+    public int compareTo( OldCaseResult o )
     {
         // NPE on purpose
         return this.name.compareTo( o.name );
@@ -161,9 +161,9 @@ public class CaseResult implements Comparable<CaseResult>
                 peakWritesPerSec, sustainedReadsPerSec, sustainedWritesPerSec );
     }
 
-    public static CaseResult deserialize( String serialized )
+    public static OldCaseResult deserialize( String serialized )
     {
-        CaseResult result = null;
+        OldCaseResult result = null;
         String dateAndVersionToken, // The current version token
                 readsToken, // The current reads per second token
                 writesToken, // The current writes per second token
@@ -203,7 +203,7 @@ public class CaseResult implements Comparable<CaseResult>
             return null;
         }
 
-        result = new CaseResult( dateAndVersionToken ); // TODO: The name field should store the name of the benchmark, not the date and version
+        result = new OldCaseResult( dateAndVersionToken ); // TODO: The name field should store the name of the benchmark, not the date and version
         result.neoVersion = parseVersion( dateAndVersionToken );
         result.avgReadsPerSec = reads;
         result.avgWritePerSec = writes;

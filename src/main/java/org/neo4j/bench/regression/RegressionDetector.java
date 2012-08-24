@@ -19,36 +19,62 @@
  */
 package org.neo4j.bench.regression;
 
-import java.util.SortedSet;
+import static org.neo4j.bench.domain.CaseResult.*;
+import static org.neo4j.bench.regression.RegressionReport.*;
 
-import org.neo4j.bench.cases.CaseResult;
+import org.neo4j.bench.domain.CaseResult;
+import org.neo4j.bench.domain.RunResult;
+import org.neo4j.bench.domain.RunResultSet;
+import org.neo4j.helpers.Pair;
 
 public class RegressionDetector
 {
-    public CaseResult detectRegression( PerformanceHistoryRepository history, CaseResult result, double threshold, boolean onlyCompareToGA )
+
+    private double threshold;
+
+    public RegressionDetector(double threshold)
     {
-        SortedSet<CaseResult> data;
+        this.threshold = threshold;
+    }
 
-        if(onlyCompareToGA)
-        {
-            data = history.getResultsForGAReleases();
-        } else
-        {
-            data = history.getAllResults();
-        }
+    public RegressionReport detectRegression( RunResultSet historicResults, RunResult currentRun )
+    {
+        RegressionReport report = new RegressionReport(currentRun);
 
-        for ( CaseResult previous : data.headSet( result ) )
+        for(CaseResult caseResult : currentRun.getResults())
         {
-            double previousReads = previous.getAvgReadsPerSec();
-            double previousWrites = previous.getAvgWritePerSec();
-            if ( previousReads > result.getAvgReadsPerSec()
-                    * ( 1 + threshold )
-                    || previousWrites > result.getAvgWritePerSec()
-                    * ( 1 + threshold ) )
+            for( Metric currentMetric : caseResult.getMetrics())
             {
-                return previous;
+                if(currentMetric.shouldTrackRegression())
+                {
+
+                    // Check if this metric has ever had a better value
+
+                    Pair<Metric, RunResult> resultPair = historicResults.getHighestValueOf(
+                            caseResult.getCaseName(), currentMetric.getName() );
+
+                    Metric bestHistoricValue = resultPair.first();
+                    RunResult bestHistoricRun = resultPair.other();
+
+                    if(hasRegressedMoreThanThreshold(currentMetric, bestHistoricValue))
+                    {
+
+                        // Oh noes! We found a regression :(
+
+                        report.add( new Regression(caseResult.getCaseName(), currentMetric.getName(),
+                                                   currentRun, bestHistoricRun, threshold) );
+                    }
+                }
             }
         }
-        return null;
+
+        return report;
+    }
+
+    private boolean hasRegressedMoreThanThreshold( Metric currentMetric, Metric bestHistoricValue )
+    {
+        return currentMetric.compareTo( bestHistoricValue ) > 0 &&
+               // Ensure that the difference between the values, disregarding in what "direction" is greater than the threshold allows
+               Math.abs( bestHistoricValue.getValue() - currentMetric.getValue() ) > Math.abs( bestHistoricValue.getValue() * threshold );
     }
 }

@@ -15,7 +15,7 @@
 		<threshold />
 		<tarToMail />
 		<chart-file>${project.build.directory}/chart.png</chart-file>
-		<ops-per-sec-file>${basedir}/performance.history</ops-per-sec-file>
+		<ops-per-sec-file>${basedir}/history</ops-per-sec-file>
 		<time-to-run />
 		<log-file>${project.build.directory}/perftest.log</log-file>
 	</properties>
@@ -58,7 +58,13 @@
             <artifactId>neo4j-backup</artifactId>
             <version>1.8-SNAPSHOT</version>
         </dependency>
-    </dependencies>
+
+    <dependency>
+      <groupId>org.codehaus.jackson</groupId>
+      <artifactId>jackson-mapper-asl</artifactId>
+      <version>1.8.5</version>
+    </dependency>
+  </dependencies>
 
 	<build>
 		<plugins>
@@ -85,6 +91,7 @@
 							<arg value="${run-main-class}" />
 							<arg value="-threshold=${threshold}" />
 							<arg value="-neo4j-version=${neo-version-name}" />
+              <arg value="-build-url=${build-url}" />
 							<arg value="-tarToMail=${tarToMail}" />
 							<arg value="-chart-file=${chart-file}" />
 							<arg value="-ops-per-sec-file=${ops-per-sec-file}" />

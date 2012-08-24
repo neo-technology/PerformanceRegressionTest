@@ -33,7 +33,8 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.neo4j.bench.cases.CaseResult;
+import org.neo4j.bench.cases.BenchmarkCase;
+import org.neo4j.bench.domain.CaseResult;
 import org.neo4j.bench.cases.mixedload.workers.BulkCreateWorker;
 import org.neo4j.bench.cases.mixedload.workers.BulkReaderWorker;
 import org.neo4j.bench.cases.mixedload.workers.CreateWorker;
@@ -48,8 +49,10 @@ import org.neo4j.graphdb.Node;
  * with which each thread type is launched and aggregates the results of their
  * runs.
  */
-public class MixedLoadBenchCase
+public class MixedLoadBenchCase implements BenchmarkCase
 {
+    private GraphDatabaseService graphDb;
+
     private static enum WorkerType
     {
         SIMPLE,
@@ -80,7 +83,7 @@ public class MixedLoadBenchCase
 
     private long concurrentFinishTime;
 
-    public MixedLoadBenchCase( long timeToRun )
+    public MixedLoadBenchCase( long timeToRun, GraphDatabaseService db )
     {
         simpleTasks = new LinkedList<Future<int[]>>();
         bulkTasks = new LinkedList<Future<int[]>>();
@@ -88,6 +91,7 @@ public class MixedLoadBenchCase
         nodes = new ConcurrentLinkedQueue<Node>();
         readTasksExecuted = 0;
         writeTasksExecuted = 0;
+        this.graphDb = db;
     }
 
 
@@ -97,7 +101,7 @@ public class MixedLoadBenchCase
         return nodes;
     }
 
-    public CaseResult run( GraphDatabaseService graphDb )
+    public CaseResult run( )
     {
         Random r = new Random();
         // Outside of measured stuff, just to populate the db
@@ -184,7 +188,9 @@ public class MixedLoadBenchCase
                     Thread.sleep( 100 );
                 }
                 if ( print++ % PrintEvery == 0 )
+                {
                     printOutResults( "Intermediate results for simple" );
+                }
             }
             catch ( InterruptedException e )
             {
@@ -231,7 +237,9 @@ public class MixedLoadBenchCase
                     Thread.sleep( 100 );
                 }
                 if ( print++ % PrintEvery == 0 )
+                {
                     printOutResults( "Intermediate results for Bulk" );
+                }
             }
             catch ( InterruptedException e )
             {
@@ -355,8 +363,14 @@ public class MixedLoadBenchCase
         double avgReads  = totalReads * 1.0 / ( concurrentFinishTime - startTime );
         double avgWrites = totalWrites * 1.0 / ( concurrentFinishTime - startTime );
 
-        return new CaseResult( "Current"/* <- Hack, name should be the name of the benchmark case being run. This is set to 'Current' because it shows up as the chart label. Refactor. */,
-                avgReads, avgWrites, peakReads, peakWrites, sustainedReads, sustainedWrites );
+        return new CaseResult(getClass().getSimpleName(),
+                new CaseResult.Metric("Average reads", avgReads, /* track regression = */ true ),
+                new CaseResult.Metric("Sustained reads", sustainedReads),
+                new CaseResult.Metric("Peak reads", peakReads),
+
+                new CaseResult.Metric("Average writes", avgWrites, /* track regression = */ true),
+                new CaseResult.Metric("Sustained writes", sustainedReads),
+                new CaseResult.Metric("Peak writes", peakReads));
     }
 
     private void printOutResults( String header )

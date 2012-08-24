@@ -21,106 +21,97 @@ package org.neo4j.bench.regression;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.PrintStream;
-import java.util.Iterator;
-import java.util.SortedSet;
-import java.util.TreeSet;
 
-import org.neo4j.bench.cases.CaseResult;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.map.ObjectWriter;
+import org.neo4j.bench.domain.RunResult;
+import org.neo4j.bench.domain.RunResultSet;
+import org.neo4j.bench.domain.filter.VersionFilters;
 
+/**
+ * Abstracts storage of performance history. Currently saves history in one json file per performance test run,
+ * to simplify for external tools reading the data and generating charts and reports.
+ */
 public class PerformanceHistoryRepository
 {
-    private String location;
 
-    public PerformanceHistoryRepository( String location )
+    private static class HistoryFileNaming
     {
-        this.location = location;
+
+        private File location;
+
+        public HistoryFileNaming(File historyLocation)
+        {
+            this.location = historyLocation;
+        }
+
+        public String extractTestedVersion( String filename )
+        {
+            return filename.split( "(?<=[^-])-" )[0];
+        }
+
+        public File forResult( RunResult result )
+        {
+            return new File( location, result.getTimestamp().getTime() + "-" + result.getTestedVersion() + ".json");
+        }
     }
 
-    public void save( CaseResult result )
+    private File location;
+    private ObjectMapper jsonMapper = new ObjectMapper();
+    private ObjectWriter jsonWriter = jsonMapper.defaultPrettyPrintingWriter();
+
+    private HistoryFileNaming fileNaming;
+
+    public PerformanceHistoryRepository( String locationPath )
     {
-        PrintStream historyFile = null;
+        this.location = new File(locationPath);
+        if(!location.exists())
+        {
+            location.mkdirs();
+        }
+
+        fileNaming = new HistoryFileNaming( location );
+    }
+
+    public void save( RunResult result )
+    {
         try
         {
-            historyFile = new PrintStream( new FileOutputStream(
-                    location, true ) );
-            historyFile.println( result.serialize() );
+            jsonWriter.writeValue( fileNaming.forResult( result ), result );
         }
-        catch ( FileNotFoundException e )
+        catch ( Exception e )
         {
             throw new RuntimeException( e );
         }
-        finally
-        {
-            if(historyFile != null) historyFile.close();
-        }
     }
 
-    public SortedSet<CaseResult> getResultsForGAReleases()
+    public RunResultSet getResultsForGAReleases()
     {
-        SortedSet<CaseResult> results = getAllResults();
-        Iterator<CaseResult> resultIter = results.iterator();
-        while(resultIter.hasNext())
-        {
-            if(!resultIter.next().isGARelease())
-            {
-                resultIter.remove();
-            }
-        }
-        return results;
+       return getResults().filter( VersionFilters.GA_ONLY );
     }
 
-    public SortedSet<CaseResult> getAllResults()
+    public RunResultSet getResults()
     {
         BufferedReader reader = null;
-        SortedSet<CaseResult> result = new TreeSet<CaseResult>();
-        CaseResult currentStat = null;
+        RunResultSet runResult = new RunResultSet();
 
-        File dataFile = new File( location );
-        if ( !dataFile.exists() )
+        if ( location.exists() )
         {
-            return result;
-        }
-        try
-        {
-            reader = new BufferedReader( new FileReader( dataFile ) );
-            String line; // The current line
-            while ( ( line = reader.readLine() ) != null )
-            {
-                currentStat = CaseResult.deserialize( line );
-                if ( currentStat != null )
-                {
-                    result.add( currentStat );
-                }
-            }
-
-            // Add the latest result, even if it was not a GA
-            if(currentStat != null && !currentStat.isGARelease()) {
-                result.add(currentStat);
-            }
-        }
-        catch ( IOException e )
-        {
-            throw new RuntimeException( e );
-        }
-        finally
-        {
-            if ( reader != null )
+            for(String path : location.list())
             {
                 try
                 {
-                    reader.close();
+                    runResult.add( jsonMapper.readValue( new File(location, path), RunResult.class ) );
                 }
                 catch ( IOException e )
                 {
-                    e.printStackTrace();
+                    throw new RuntimeException( e );
                 }
             }
         }
-        return result;
+        return runResult;
     }
+
+
 }

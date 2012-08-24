@@ -9,6 +9,7 @@ bin
 target
 ops-per-second
 performance.history
+history/
 *.iml
 *.ipr
 *.iws

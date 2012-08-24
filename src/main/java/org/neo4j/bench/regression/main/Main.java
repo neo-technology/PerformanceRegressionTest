@@ -19,18 +19,17 @@
  */
 package org.neo4j.bench.regression.main;
 
-import java.text.DecimalFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.SortedSet;
 
 import org.neo4j.backup.check.ConsistencyCheck;
-import org.neo4j.bench.cases.CaseResult;
+import org.neo4j.bench.cases.BenchmarkCase;
+import org.neo4j.bench.domain.RunResult;
 import org.neo4j.bench.cases.mixedload.MixedLoadBenchCase;
-import org.neo4j.bench.chart.ChartGenerator;
 import org.neo4j.bench.regression.RegressionDetector;
 import org.neo4j.bench.regression.PerformanceHistoryRepository;
+import org.neo4j.bench.regression.RegressionReport;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.neo4j.graphdb.factory.GraphDatabaseSetting;
@@ -52,88 +51,40 @@ public class Main
         String chartFilename = argz.get( CHART_FILE_ARG, "chart.png" );
         double threshold = Double.parseDouble( argz.get( "threshold", "0.1" ) );
         String neoVersion = argz.get( "neo4j-version", "N/A" );
+        String buildUrl = argz.get( "build-url", "Unknown build url" );
         boolean onlyCompareToGAReleases = Boolean.parseBoolean( argz.get( "only-compare-to-ga", "true" ) ); /* Compare performance only to GA releases */
 
         // Components
         final GraphDatabaseService db = createDb();
         PerformanceHistoryRepository history = new PerformanceHistoryRepository(argz.get(OPS_PER_SECOND_FILE_ARG, "ops-per-second"));
-        RegressionDetector regressionDetector = new RegressionDetector();
+        RegressionDetector regressionDetector = new RegressionDetector(threshold);
 
         // Benchmark
-        final MixedLoadBenchCase myCase = new MixedLoadBenchCase( timeToRun );
+        BenchmarkCase [] benchmarks = new BenchmarkCase[] {
+            new MixedLoadBenchCase( timeToRun, db )
+        };
 
-        CaseResult currentResult = myCase.run( db );
+        RunResult results = new RunResult(neoVersion, new Date(), buildUrl);
+        for(BenchmarkCase benchCase : benchmarks)
+        {
+            results.addResult( benchCase.run() );
+        }
 
-        // Cleanup
+        // TODO: Each test should be expected to set up and tear down its own infrastructure
         db.shutdown();
-
-
-        //
-        // Handle test results
-        //
-
-        currentResult.setNeoVersion( neoVersion );
-        currentResult.setDate( new Date() );
-
-        CaseResult trumpingResult = regressionDetector.detectRegression( history, currentResult, threshold, onlyCompareToGAReleases );
-
-        generateCharts(history, trumpingResult, currentResult, onlyCompareToGAReleases);
-
-        // Save our latest result
-        history.save( currentResult );
-
-        // Run a consistency check
         ConsistencyCheck.main("db");
 
-        // And print out some failure info if we regressed.
-        if( trumpingResult != null) {
+        // Save results
+        history.save( results );
 
-            double trumpReads = trumpingResult.getAvgReadsPerSec();
-            double trumpWrites = trumpingResult.getAvgWritePerSec();
+        // Check for regression
+        RegressionReport regressionReport = regressionDetector.detectRegression( history.getResults(), results );
 
-            double currentReads = currentResult.getAvgReadsPerSec();
-            double currentWrites = currentResult.getAvgWritePerSec();
-
-            System.out.println();
-            System.out.println("================ FAILURE ================");
-            System.out.println();
-            if(trumpReads > currentReads * (1 + threshold)) {
-                System.out.println("Degradation: Read performance between "+ trumpingResult.getNeoVersion() +" & " +
-                        currentResult.getNeoVersion() + " (now).");
-                System.out.printf( "  Avg. read performance for %s : %.2f reads/second.\n",
-                        trumpingResult.getNeoVersion(), trumpReads );
-                System.out.printf( "  Avg. read performance for %s (now) : %.2f reads/second.\n", currentResult.getNeoVersion(), currentReads );
-                System.out.println();
-                System.out.printf( "  Maximum difference allowed: ±%.2f reads/second.\n", trumpReads * threshold );
-                System.out.printf( "  Actual difference detected:  %.2f reads/second.\n", trumpReads - currentReads );
-                System.out.println();
-            }
-            if(trumpWrites > currentWrites * (1 + threshold)) {
-                System.out.println("Degradation: Write performance between "+ trumpingResult.getNeoVersion() +" & " + currentResult.getNeoVersion() + " (now).");
-                System.out.printf( "  Avg. write performance for %s: %.2f writes/second.\n", trumpingResult.getNeoVersion(), trumpWrites );
-                System.out.printf( "  Avg. write performance for %s (now): %.2f writes/second.\n", currentResult.getNeoVersion(), currentWrites);
-                System.out.println();
-                System.out.printf( "  Maximum difference allowed: ±%.2f writes/second.\n", trumpWrites * threshold );
-                System.out.printf( "  Actual difference detected:  %.2f writes/second.\n", trumpWrites - currentWrites );
-                System.out.println();
-            }
-            System.out.println("=========================================");
-
+        if(regressionReport.regressionDetected())
+        {
+            System.out.println(regressionReport);
             System.exit(1);
         }
-    }
-
-    private static void generateCharts(PerformanceHistoryRepository history, CaseResult trumpingResult, CaseResult currentResult, boolean onlyIncludeGA )
-    {
-        ChartGenerator chartGenerator = new ChartGenerator();
-
-        // Fetch results
-        SortedSet<CaseResult> results = onlyIncludeGA ? history.getResultsForGAReleases() : history.getAllResults();
-        results.add( currentResult );
-
-        chartGenerator.generateWritePerformanceChart( results, "perf.write.png" );
-        chartGenerator.generateReadPerformanceChart(  results, "perf.read.png" );
-
     }
 
     private static GraphDatabaseService createDb()

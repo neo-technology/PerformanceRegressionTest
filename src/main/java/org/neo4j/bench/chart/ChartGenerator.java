@@ -37,14 +37,14 @@ import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.renderer.category.BarRenderer3D;
 import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.ui.TextAnchor;
-import org.neo4j.bench.cases.CaseResult;
+import org.neo4j.bench.cases.OldCaseResult;
 
 public class ChartGenerator
 {
-    public void generateWritePerformanceChart( SortedSet<CaseResult> results, String fileName )
+    public void generateWritePerformanceChart( SortedSet<OldCaseResult> results, String fileName )
     {
         DefaultCategoryDataset dataSet = new DefaultCategoryDataset();
-        for ( CaseResult key : results )
+        for ( OldCaseResult key : results )
         {
             dataSet.addValue(key.getAvgWritePerSec(),
                     key.getName(), "avg writes");
@@ -57,10 +57,10 @@ public class ChartGenerator
         generateChart("Write performance history", fileName, "ops/s", dataSet);
     }
 
-    public void generateReadPerformanceChart( SortedSet<CaseResult> results, String fileName )
+    public void generateReadPerformanceChart( SortedSet<OldCaseResult> results, String fileName )
     {
         DefaultCategoryDataset dataSet = new DefaultCategoryDataset();
-        for ( CaseResult key : results )
+        for ( OldCaseResult key : results )
         {
             dataSet.addValue(key.getAvgReadsPerSec(),
                     key.getName(), "avg reads");
