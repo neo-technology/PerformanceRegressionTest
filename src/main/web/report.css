@@ -46,3 +46,8 @@ text.axis-label
     text-anchor: middle;
 }
 
+.scenario-name
+{
+  text-transform: capitalize;
+  font-weight: bold;
+}
