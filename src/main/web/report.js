@@ -24,13 +24,16 @@ d3.tsv("data.tsv", function(data) {
         return d.measurement;
     }
 
+    var timeFormat = d3.time.format("%Y-%m-%d %H:%M");
+
     function buildTime(d)
     {
-        return d["build"];
+        var timeString = "2012-" + d["build"].substring(0, 11);
+        return timeFormat.parse(timeString);
     }
 
     var scenarios = ["avgr", "avgw", "peakr", "peakw", "susr", "susw"];
-
+                                                                                        x
     var measurements = data.map(function(build) {
         return scenarios.map(function(scenario) {
             return {
@@ -74,7 +77,9 @@ d3.tsv("data.tsv", function(data) {
         .attr("width", boundingBox.width)
         .attr("height", boundingBox.height);
 
-    var x = d3.scale.ordinal().domain(data.map(buildTime)).rangePoints([0, chartSize.width]);
+    var x = d3.time.scale()
+        .domain([d3.min(data, buildTime), d3.max(data, buildTime)])
+        .range([0, chartSize.width]);
     var xAxis = d3.svg.axis().scale(x).orient("left");
 
     var scenarioSpecificYScales = {};
