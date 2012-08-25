@@ -38,7 +38,7 @@ d3.tsv("data.tsv", function(data) {
     }
 
     var scenarios = ["avgr", "avgw", "peakr", "peakw", "susr", "susw"];
-                                                                                        x
+
     var measurements = data.map(function(build) {
         return scenarios.map(function(scenario) {
             return {
@@ -62,7 +62,7 @@ d3.tsv("data.tsv", function(data) {
     });
 
     var chartSize = { width: 1024, height: 400},
-        margins = { left: 100, right: 100, top: 100, betweenCharts: 300, bottom: 300 },
+        margins = { left: 100, right: 100, top: 100, betweenCharts: 150, bottom: 150 },
         boundingBox = {
             width: chartSize.width + margins.left + margins.right,
             height: scenarios.length * (chartSize.height + margins.betweenCharts)
