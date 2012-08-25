@@ -37,7 +37,14 @@ d3.tsv("data.tsv", function(data) {
         return d["build"].match(/\[(.*)\]/)[1];
     }
 
-    var scenarios = ["avgr", "avgw", "peakr", "peakw", "susr", "susw"];
+    var scenarios = [
+        { key: "avgr", name: "Average Reads" },
+        { key: "avgw", name: "Average Writes" },
+        { key: "peakr", name: "Peak Reads" },
+        { key: "peakw", name: "Peak Writes" },
+        { key: "susr", name: "Sustained Reads" },
+        { key: "susw", name: "Sustained Writes" }
+    ];
 
     var measurements = data.map(function(build) {
         return scenarios.map(function(scenario) {
@@ -45,7 +52,7 @@ d3.tsv("data.tsv", function(data) {
                 build: buildTime(build),
                 branch: branch(build),
                 scenario: scenario,
-                measurement: parseFloat(build[scenario])
+                measurement: parseFloat(build[scenario.key])
             };
         });
     }).reduce(function(a, b) {
@@ -54,9 +61,9 @@ d3.tsv("data.tsv", function(data) {
 
     var scenarioMeasurements = {};
     measurements.forEach(function(measurement) {
-        var list = scenarioMeasurements[measurement.scenario];
+        var list = scenarioMeasurements[measurement.scenario.key];
         if (!list) {
-            list = (scenarioMeasurements[measurement.scenario] = []);
+            list = (scenarioMeasurements[measurement.scenario.key] = []);
         }
         list.push(measurement);
     });
@@ -91,10 +98,10 @@ d3.tsv("data.tsv", function(data) {
     var scenarioSpecificYScales = {};
     scenarios.forEach(function(scenario) {
         var yScale = d3.scale.linear()
-            .domain([0, d3.max(scenarioMeasurements[scenario].map(measurement) )] )
+            .domain([0, d3.max(scenarioMeasurements[scenario.key].map(measurement) )] )
             .range( [chartSize.height, 0] );
         var yAxis = d3.svg.axis().scale(yScale).orient("left");
-        scenarioSpecificYScales[scenario] = { y: yScale, yAxis: yAxis };
+        scenarioSpecificYScales[scenario.key] = { y: yScale, yAxis: yAxis };
     });
 
     var chart = svg.selectAll("g.chart")
@@ -107,20 +114,20 @@ d3.tsv("data.tsv", function(data) {
     chart.selectAll("text.scenario-name")
         .data(function(scenario) { return [scenario]; })
         .enter().append("svg:text")
-        .text(function(scenario) { return scenario; })
-        .attr("x", 40)
+        .text(function(scenario) { return scenario.name; })
+        .attr("y", -40)
         .attr("class", "scenario-name");
 
     var branchColour = d3.scale.category10();
 
     chart.selectAll("circle.measurement")
-        .data(function(scenario) { return scenarioMeasurements[scenario]; })
+        .data(function(scenario) { return scenarioMeasurements[scenario.key]; })
         .enter()
         .append("svg:circle")
         .attr("class", "measurement")
         .attr("fill", function(d) { return branchColour(d.branch); })
         .attr("r", 2)
-        .attr("cy", function(d) { return scenarioSpecificYScales[d.scenario].y(measurement(d)); })
+        .attr("cy", function(d) { return scenarioSpecificYScales[d.scenario.key].y(measurement(d)); })
         .attr("cx", function(d) { return x( d.build ); });
 
     chart.append("svg:g")
@@ -135,7 +142,7 @@ d3.tsv("data.tsv", function(data) {
         .call(function(selection) {
             selection.forEach(function(d) {
                 var group = d3.select(d[0]);
-                var axis = scenarioSpecificYScales[group.data()].yAxis;
+                var axis = scenarioSpecificYScales[group.data()[0].key].yAxis;
                 axis(group);
             });
         });
