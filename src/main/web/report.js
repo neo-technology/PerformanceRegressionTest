@@ -32,12 +32,18 @@ d3.tsv("data.tsv", function(data) {
         return timeFormat.parse(timeString);
     }
 
+    function branch(d)
+    {
+        return d["build"].match(/\[(.*)\]/)[1];
+    }
+
     var scenarios = ["avgr", "avgw", "peakr", "peakw", "susr", "susw"];
                                                                                         x
     var measurements = data.map(function(build) {
         return scenarios.map(function(scenario) {
             return {
                 build: buildTime(build),
+                branch: branch(build),
                 scenario: scenario,
                 measurement: parseFloat(build[scenario])
             };
@@ -105,11 +111,14 @@ d3.tsv("data.tsv", function(data) {
         .attr("x", 40)
         .attr("class", "scenario-name");
 
-     chart.selectAll("circle.measurement")
+    var branchColour = d3.scale.category10();
+
+    chart.selectAll("circle.measurement")
         .data(function(scenario) { return scenarioMeasurements[scenario]; })
         .enter()
         .append("svg:circle")
         .attr("class", "measurement")
+        .attr("fill", function(d) { return branchColour(d.branch); })
         .attr("r", 2)
         .attr("cy", function(d) { return scenarioSpecificYScales[d.scenario].y(measurement(d)); })
         .attr("cx", function(d) { return x( d.build ); });
