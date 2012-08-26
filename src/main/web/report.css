@@ -36,9 +36,17 @@ text.axis-label
     alignment-baseline: central;
 }
 
-.tooltip
+.tooltip text
 {
     text-anchor: middle;
+    alignment-baseline: central;
+}
+
+.tooltip .outline
+{
+    fill: white;
+    stroke: black;
+    stroke-with: 1px;
 }
 
 .scenario-name

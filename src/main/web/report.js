@@ -24,12 +24,12 @@ d3.tsv("data.tsv", function(data) {
         return d.measurement;
     }
 
-    var timeFormat = d3.time.format("%Y-%m-%d %H:%M");
+    var inputDateFormat = d3.time.format("%Y-%m-%d %H:%M");
 
     function buildTime(d)
     {
         var timeString = "2012-" + d["build"].substring(0, 11);
-        return timeFormat.parse(timeString);
+        return inputDateFormat.parse(timeString);
     }
 
     function branch(d)
@@ -120,15 +120,41 @@ d3.tsv("data.tsv", function(data) {
 
     var branchColour = d3.scale.category10();
 
+    var y = function(d) { return scenarioSpecificYScales[d.scenario.key].y(measurement(d)); };
+
+    var toolTipDateFormat = d3.time.format("%Y-%m-%d %H:%M");
+
+    var mouseOver = function() {
+        var circle = d3.select(this);
+        circle.style("fill", "black");
+        var data = circle.data()[0];
+        var tooltipGroup = d3.select(this.parentNode).select("g.tooltip")
+            .attr("transform", "translate(" + x(data.build) + "," + y(data) + ")")
+            .attr("visibility", "visible");
+
+        tooltipGroup.select("text")
+            .text( toolTipDateFormat(data.build) + " [" + data.branch + "] " + measurement(data) );
+    };
+
+    var mouseOut = function() {
+        var circle = d3.select(this);
+        var data = circle.data()[0];
+        circle.style("fill", branchColour(data.branch));
+        d3.select(this.parentNode).select("g.tooltip")
+            .attr("visibility", "hidden");
+    };
+
     chart.selectAll("circle.measurement")
         .data(function(scenario) { return scenarioMeasurements[scenario.key]; })
         .enter()
         .append("svg:circle")
         .attr("class", "measurement")
         .attr("fill", function(d) { return branchColour(d.branch); })
-        .attr("r", 2)
-        .attr("cy", function(d) { return scenarioSpecificYScales[d.scenario.key].y(measurement(d)); })
-        .attr("cx", function(d) { return x( d.build ); });
+        .attr("r", 3)
+        .attr("cy", y)
+        .attr("cx", function(d) { return x( d.build ); })
+        .on("mouseover", mouseOver)
+        .on("mouseout", mouseOut);
 
     chart.append("svg:g")
         .attr("class", "x axis")
@@ -151,4 +177,19 @@ d3.tsv("data.tsv", function(data) {
         .attr("class", "axis-label y")
         .attr("transform", "translate(" + 2 * -margins.left / 3 + " " + chartSize.height / 2 + ") rotate(-90)")
         .text("Operations/s");
+
+    // tooltips should go on top of everything else; simplest way to achieve this is to append them to the DOM last.
+    var toolTip = chart.selectAll("g.tooltip")
+        .data(function(scenario) { return [scenario]; })
+        .enter().append("svg:g")
+        .attr("visibility", "hidden")
+        .attr("class", "tooltip");
+
+    // TODO: compute the correct size for the outline based on the size of text inside it, using getBBox() or similar
+    toolTip.append("svg:path")
+        .attr("class", "outline")
+        .attr("d", "M 0 -3 L 10 -13 L 150 -13 L 150 -38 L -150 -38 L -150 -13 L -10 -13 Z");
+
+    toolTip.append("svg:text")
+        .attr("y", -25.5);
 });
