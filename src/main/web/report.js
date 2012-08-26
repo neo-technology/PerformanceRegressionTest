@@ -123,6 +123,7 @@ d3.tsv("data.tsv", function(data) {
     var y = function(d) { return scenarioSpecificYScales[d.scenario.key].y(measurement(d)); };
 
     var toolTipDateFormat = d3.time.format("%Y-%m-%d %H:%M");
+    var circleRadius = 3;
 
     var mouseOver = function() {
         var circle = d3.select(this);
@@ -132,8 +133,26 @@ d3.tsv("data.tsv", function(data) {
             .attr("transform", "translate(" + x(data.build) + "," + y(data) + ")")
             .attr("visibility", "visible");
 
-        tooltipGroup.select("text")
+        var text = tooltipGroup.select("text")
             .text( toolTipDateFormat(data.build) + " [" + data.branch + "] " + measurement(data) );
+
+        var textSize = text.node().getBBox();
+
+        var arrowSize = 10;
+        var padding = 3;
+        tooltipGroup.select("path.outline")
+            .attr("d", [
+                "M", 0, -circleRadius,
+                "L", arrowSize, -circleRadius - arrowSize,
+                "L", textSize.width / 2 + padding, -circleRadius - arrowSize,
+                "L", textSize.width / 2 + padding, -textSize.height - padding * 2 - circleRadius - arrowSize,
+                "L", -textSize.width / 2 - padding, -textSize.height - padding * 2 - circleRadius - arrowSize,
+                "L", -textSize.width / 2 - padding, -circleRadius - arrowSize,
+                "L", -arrowSize, -circleRadius - arrowSize,
+                "Z"
+            ].join(" "));
+
+        text.attr("y", -textSize.height / 2 - padding - circleRadius - arrowSize);
     };
 
     var mouseOut = function() {
@@ -150,7 +169,7 @@ d3.tsv("data.tsv", function(data) {
         .append("svg:circle")
         .attr("class", "measurement")
         .attr("fill", function(d) { return branchColour(d.branch); })
-        .attr("r", 3)
+        .attr("r", circleRadius)
         .attr("cy", y)
         .attr("cx", function(d) { return x( d.build ); })
         .on("mouseover", mouseOver)
@@ -185,11 +204,8 @@ d3.tsv("data.tsv", function(data) {
         .attr("visibility", "hidden")
         .attr("class", "tooltip");
 
-    // TODO: compute the correct size for the outline based on the size of text inside it, using getBBox() or similar
     toolTip.append("svg:path")
-        .attr("class", "outline")
-        .attr("d", "M 0 -3 L 10 -13 L 150 -13 L 150 -38 L -150 -38 L -150 -13 L -10 -13 Z");
+        .attr("class", "outline");
 
-    toolTip.append("svg:text")
-        .attr("y", -25.5);
+    toolTip.append("svg:text");
 });
