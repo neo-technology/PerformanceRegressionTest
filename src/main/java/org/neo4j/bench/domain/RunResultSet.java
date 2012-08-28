@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.codehaus.jackson.annotate.JsonProperty;
 import org.neo4j.bench.domain.filter.RunResultFilter;
 import org.neo4j.helpers.Pair;
 
@@ -32,7 +33,7 @@ import org.neo4j.helpers.Pair;
 public class RunResultSet
 {
 
-    private List<RunResult> results;
+    @JsonProperty private List<RunResult> results;
 
     public RunResultSet()
     {

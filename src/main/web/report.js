@@ -17,53 +17,68 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-d3.tsv("data.tsv", function(data) {
+d3.json("performance-history.json", function(data) {
 
     function measurement( d )
     {
         return d.measurement;
     }
 
-    var inputDateFormat = d3.time.format("%Y-%m-%d %H:%M");
-
     function buildTime(d)
     {
-        var timeString = "2012-" + d["build"].substring(0, 11);
-        return inputDateFormat.parse(timeString);
+        return d.buildTime;
     }
 
     function branch(d)
     {
-        return d["build"].match(/\[(.*)\]/)[1];
+        return d.branch;
     }
 
-    var scenarios = [
-        { key: "avgr", name: "Average Reads" },
-        { key: "avgw", name: "Average Writes" },
-        { key: "peakr", name: "Peak Reads" },
-        { key: "peakw", name: "Peak Writes" },
-        { key: "susr", name: "Sustained Reads" },
-        { key: "susw", name: "Sustained Writes" }
-    ];
+    function openUrlInTab(url )
+    {
+      window.open(url, '_blank');
+      window.focus();
+    }
 
-    var measurements = data.map(function(build) {
-        return scenarios.map(function(scenario) {
-            return {
-                build: buildTime(build),
-                branch: branch(build),
-                scenario: scenario,
-                measurement: parseFloat(build[scenario.key])
-            };
+    var measurements = data['results'].map(function(build) {
+
+        var buildUrl = build['buildUrl'],
+            testedVersion = build['testedVersion'],
+            timestamp = new Date(build['timestamp']);
+
+        return build['results'].map(function(perfCase)
+        {
+            var caseName = perfCase['caseName'];
+
+            return perfCase['metrics'].map(function(metric)
+            {
+                return {
+                    buildTime : timestamp,
+                    buildUrl : buildUrl,
+                    branch : testedVersion,
+                    scenario : {
+                      key : caseName + "-" + metric.name, // TODO
+                      name : caseName + ": " + metric.name
+                    },
+                    measurement : metric.value
+                };
+            });
+        }).reduce(function(a, b) {
+            return a.concat(b);
         });
     }).reduce(function(a, b) {
         return a.concat(b);
     });
 
-    var scenarioMeasurements = {};
+    // Box up the data nicely for consumption
+
+    var scenarioMeasurements = {},
+        scenarios = [];
     measurements.forEach(function(measurement) {
         var list = scenarioMeasurements[measurement.scenario.key];
         if (!list) {
             list = (scenarioMeasurements[measurement.scenario.key] = []);
+            scenarios.push(measurement.scenario);
         }
         list.push(measurement);
     });
@@ -90,8 +105,10 @@ d3.tsv("data.tsv", function(data) {
         .attr("width", boundingBox.width)
         .attr("height", boundingBox.height);
 
+
+
     var x = d3.time.scale()
-        .domain([d3.min(data, buildTime), d3.max(data, buildTime)])
+        .domain([d3.min(measurements, buildTime), d3.max(measurements, buildTime)])
         .range([0, chartSize.width]);
     var xAxis = d3.svg.axis().scale(x).orient("left");
 
@@ -130,11 +147,11 @@ d3.tsv("data.tsv", function(data) {
         circle.style("fill", "black");
         var data = circle.data()[0];
         var tooltipGroup = d3.select(this.parentNode).select("g.tooltip")
-            .attr("transform", "translate(" + x(data.build) + "," + y(data) + ")")
+            .attr("transform", "translate(" + x(data.buildTime) + "," + y(data) + ")")
             .attr("visibility", "visible");
 
         var text = tooltipGroup.select("text")
-            .text( toolTipDateFormat(data.build) + " [" + data.branch + "] " + measurement(data) );
+            .text( toolTipDateFormat(data.buildTime) + " [" + data.branch + "] " + Math.round(measurement(data)*100)/100 );
 
         var textSize = text.node().getBBox();
 
@@ -171,9 +188,10 @@ d3.tsv("data.tsv", function(data) {
         .attr("fill", function(d) { return branchColour(d.branch); })
         .attr("r", circleRadius)
         .attr("cy", y)
-        .attr("cx", function(d) { return x( d.build ); })
+        .attr("cx", function(d) { console.log(d.buildTime, x(d.buildTime), d.buildTime.getTime()); return x(d.buildTime); })
         .on("mouseover", mouseOver)
-        .on("mouseout", mouseOut);
+        .on("mouseout", mouseOut)
+        .on("click", function(d,i) { openUrlInTab(d.buildUrl); });
 
     chart.append("svg:g")
         .attr("class", "x axis")

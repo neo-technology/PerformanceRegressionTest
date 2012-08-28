@@ -19,6 +19,7 @@
  */
 package org.neo4j.bench.regression.main;
 
+import java.io.File;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -76,6 +77,7 @@ public class Main
 
         // Save results
         history.save( results );
+        history.dumpTo( new File( "performance-history.json" ) );
 
         // Check for regression
         RegressionReport regressionReport = regressionDetector.detectRegression( history.getResults(), results );

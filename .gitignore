@@ -14,3 +14,4 @@ history/
 *.ipr
 *.iws
 .externalToolBuilders/
+.DS_store
