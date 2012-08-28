@@ -123,7 +123,8 @@ public class PerformanceHistoryRepository
         {
             if(!output.exists())
             {
-                output.getParentFile().mkdirs();
+                if(output.getAbsoluteFile().getParentFile() != null)
+                    output.getAbsoluteFile().getParentFile().mkdirs();
                 output.createNewFile();
             }
 
