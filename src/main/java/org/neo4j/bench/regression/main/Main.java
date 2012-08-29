@@ -24,12 +24,11 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.neo4j.backup.check.ConsistencyCheck;
 import org.neo4j.bench.cases.BenchmarkCase;
-import org.neo4j.bench.domain.RunResult;
 import org.neo4j.bench.cases.mixedload.MixedLoadBenchCase;
-import org.neo4j.bench.regression.RegressionDetector;
+import org.neo4j.bench.domain.RunResult;
 import org.neo4j.bench.regression.PerformanceHistoryRepository;
+import org.neo4j.bench.regression.RegressionDetector;
 import org.neo4j.bench.regression.RegressionReport;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
@@ -73,7 +72,7 @@ public class Main
 
         // TODO: Each test should be expected to set up and tear down its own infrastructure
         db.shutdown();
-        ConsistencyCheck.main("db");
+        //ConsistencyCheck.main("db");          // Commented out to allow testing against 1.7
 
         // Save results
         history.save( results );
