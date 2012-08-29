@@ -23,7 +23,17 @@ public final class Units
 {
     // Neo concepts
 
-    public static Unit TRANSACTION = new Unit( "tx" );
+    /**
+     * A basic write transaction that uses the core API basic functions.
+     */
+    public static Unit CORE_API_WRITE_TRANSACTION = new Unit( "Core API write tx" );
+
+    /**
+     * This represents a non-transactional read operation
+     * using the core API and indexes.
+     * It is used by {@link org.neo4j.bench.cases.mixedload.MixedLoadBenchCase}.
+     */
+    public static Unit CORE_API_READ = new Unit( "Core API read" );
 
     // Time units
 

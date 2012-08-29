@@ -19,8 +19,9 @@
  */
 package org.neo4j.bench.domain;
 
+import static org.neo4j.bench.domain.Units.CORE_API_READ;
+import static org.neo4j.bench.domain.Units.CORE_API_WRITE_TRANSACTION;
 import static org.neo4j.bench.domain.Units.MILLISECOND;
-import static org.neo4j.bench.domain.Units.TRANSACTION;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -48,7 +49,7 @@ public class CaseResult
             this.name = name;
             this.value = value;
             this.trackRegression = trackRegression;
-            this.unit = unit != null ? unit : TRANSACTION.per( MILLISECOND ); // For backwards compatibility
+            this.unit = unit != null ? unit : backwardsCompatUnit();
         }
 
         public String getName()
@@ -75,6 +76,22 @@ public class CaseResult
         public int compareTo( Metric other )
         {
             return other.value.compareTo( value );
+        }
+
+        /**
+         * Get a unit for this case result based on the name, used to cover
+         * for saved stats that didn't contain units.
+         * @return
+         */
+        private Unit backwardsCompatUnit()
+        {
+            if(name.contains( "reads" ))
+            {
+                return CORE_API_READ.per( MILLISECOND );
+            } else
+            {
+                return CORE_API_WRITE_TRANSACTION.per( MILLISECOND );
+            }
         }
     }
 

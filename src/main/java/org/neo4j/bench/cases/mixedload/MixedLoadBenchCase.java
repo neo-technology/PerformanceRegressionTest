@@ -19,8 +19,9 @@
  */
 package org.neo4j.bench.cases.mixedload;
 
+import static org.neo4j.bench.domain.Units.CORE_API_READ;
+import static org.neo4j.bench.domain.Units.CORE_API_WRITE_TRANSACTION;
 import static org.neo4j.bench.domain.Units.MILLISECOND;
-import static org.neo4j.bench.domain.Units.TRANSACTION;
 
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -63,7 +64,8 @@ public class MixedLoadBenchCase implements BenchmarkCase
         BULK
     }
 
-    private static final Unit TX_PER_MS = TRANSACTION.per( MILLISECOND );
+    private static final Unit TX_PER_MS    = CORE_API_WRITE_TRANSACTION.per( MILLISECOND );
+    private static final Unit READS_PER_MS = CORE_API_READ.per( MILLISECOND );
 
     private static final int PrintEvery = 500;
 
@@ -366,13 +368,13 @@ public class MixedLoadBenchCase implements BenchmarkCase
 
     private CaseResult createResults()
     {
-        double avgReads  = totalReads * 1.0 / ( concurrentFinishTime - startTime );
+        double avgReads  = totalReads  * 1.0 / ( concurrentFinishTime - startTime );
         double avgWrites = totalWrites * 1.0 / ( concurrentFinishTime - startTime );
 
         return new CaseResult(getClass().getSimpleName(),
-                new CaseResult.Metric("Average reads", avgReads,          TX_PER_MS, /* track regression = */ true ),
-                new CaseResult.Metric("Sustained reads", sustainedReads,  TX_PER_MS),
-                new CaseResult.Metric("Peak reads", peakReads,            TX_PER_MS),
+                new CaseResult.Metric("Average reads", avgReads,          READS_PER_MS, /* track regression = */ true ),
+                new CaseResult.Metric("Sustained reads", sustainedReads,  READS_PER_MS ),
+                new CaseResult.Metric("Peak reads", peakReads,            READS_PER_MS ),
 
                 new CaseResult.Metric("Average writes", avgWrites,        TX_PER_MS, /* track regression = */ true),
                 new CaseResult.Metric("Sustained writes", sustainedReads, TX_PER_MS),

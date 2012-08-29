@@ -39,7 +39,7 @@ public class Unit
 
     public Unit per(Unit other)
     {
-        return new Unit( key + "/" + other.key );
+        return new Unit( key + " / " + other.key );
     }
 
 }
