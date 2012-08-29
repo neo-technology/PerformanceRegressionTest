@@ -19,6 +19,9 @@
  */
 package org.neo4j.bench.domain;
 
+import static org.neo4j.bench.domain.Units.MILLISECOND;
+import static org.neo4j.bench.domain.Units.TRANSACTION;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -28,23 +31,24 @@ import org.codehaus.jackson.annotate.JsonProperty;
 public class CaseResult
 {
 
-
     public static class Metric implements Comparable<Metric>
     {
         private String name;
         private Double value;
         private boolean trackRegression;
+        private Unit unit;
 
-        public Metric( String name, double value )
+        public Metric( String name, double value, Unit unit )
         {
-            this(name, value, false);
+            this(name, value, unit, false);
         }
 
-        public Metric( @JsonProperty("name") String name, @JsonProperty("value") double value, @JsonProperty("trackRegression") boolean trackRegression )
+        public Metric( @JsonProperty("name") String name, @JsonProperty("value") double value, @JsonProperty("unit") Unit unit , @JsonProperty("trackRegression") boolean trackRegression)
         {
             this.name = name;
             this.value = value;
             this.trackRegression = trackRegression;
+            this.unit = unit != null ? unit : TRANSACTION.per( MILLISECOND ); // For backwards compatibility
         }
 
         public String getName()
@@ -55,6 +59,11 @@ public class CaseResult
         public double getValue()
         {
             return value;
+        }
+
+        public Unit getUnit()
+        {
+            return unit;
         }
 
         public boolean shouldTrackRegression()

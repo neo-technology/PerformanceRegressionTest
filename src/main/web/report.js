@@ -57,8 +57,9 @@ d3.json("performance-history.json", function(data) {
                     buildUrl : buildUrl,
                     branch : testedVersion,
                     scenario : {
-                      key : caseName + "-" + metric.name, // TODO
-                      name : caseName + ": " + metric.name
+                      key  : caseName + "-" + metric.name, // TODO
+                      name : caseName + ": " + metric.name,
+                      unit : metric.unit.key
                     },
                     measurement : metric.value
                 };
@@ -188,7 +189,7 @@ d3.json("performance-history.json", function(data) {
         .attr("fill", function(d) { return branchColour(d.branch); })
         .attr("r", circleRadius)
         .attr("cy", y)
-        .attr("cx", function(d) { console.log(d.buildTime, x(d.buildTime), d.buildTime.getTime()); return x(d.buildTime); })
+        .attr("cx", function(d) { return x(d.buildTime); })
         .on("mouseover", mouseOver)
         .on("mouseout", mouseOut)
         .on("click", function(d,i) { openUrlInTab(d.buildUrl); });
@@ -213,7 +214,7 @@ d3.json("performance-history.json", function(data) {
     chart.append("svg:text")
         .attr("class", "axis-label y")
         .attr("transform", "translate(" + 2 * -margins.left / 3 + " " + chartSize.height / 2 + ") rotate(-90)")
-        .text("Operations/s");
+        .text(function(scenario){ return scenario.unit; });
 
     // tooltips should go on top of everything else; simplest way to achieve this is to append them to the DOM last.
     var toolTip = chart.selectAll("g.tooltip")

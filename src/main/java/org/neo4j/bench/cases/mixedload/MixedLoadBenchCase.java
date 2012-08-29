@@ -19,6 +19,9 @@
  */
 package org.neo4j.bench.cases.mixedload;
 
+import static org.neo4j.bench.domain.Units.MILLISECOND;
+import static org.neo4j.bench.domain.Units.TRANSACTION;
+
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -34,13 +37,14 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.neo4j.bench.cases.BenchmarkCase;
-import org.neo4j.bench.domain.CaseResult;
 import org.neo4j.bench.cases.mixedload.workers.BulkCreateWorker;
 import org.neo4j.bench.cases.mixedload.workers.BulkReaderWorker;
 import org.neo4j.bench.cases.mixedload.workers.CreateWorker;
 import org.neo4j.bench.cases.mixedload.workers.DeleteWorker;
 import org.neo4j.bench.cases.mixedload.workers.PropertyAddWorker;
 import org.neo4j.bench.cases.mixedload.workers.SampleReadWorker;
+import org.neo4j.bench.domain.CaseResult;
+import org.neo4j.bench.domain.Unit;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 
@@ -58,6 +62,8 @@ public class MixedLoadBenchCase implements BenchmarkCase
         SIMPLE,
         BULK
     }
+
+    private static final Unit TX_PER_MS = TRANSACTION.per( MILLISECOND );
 
     private static final int PrintEvery = 500;
 
@@ -364,13 +370,13 @@ public class MixedLoadBenchCase implements BenchmarkCase
         double avgWrites = totalWrites * 1.0 / ( concurrentFinishTime - startTime );
 
         return new CaseResult(getClass().getSimpleName(),
-                new CaseResult.Metric("Average reads", avgReads, /* track regression = */ true ),
-                new CaseResult.Metric("Sustained reads", sustainedReads),
-                new CaseResult.Metric("Peak reads", peakReads),
+                new CaseResult.Metric("Average reads", avgReads,          TX_PER_MS, /* track regression = */ true ),
+                new CaseResult.Metric("Sustained reads", sustainedReads,  TX_PER_MS),
+                new CaseResult.Metric("Peak reads", peakReads,            TX_PER_MS),
 
-                new CaseResult.Metric("Average writes", avgWrites, /* track regression = */ true),
-                new CaseResult.Metric("Sustained writes", sustainedReads),
-                new CaseResult.Metric("Peak writes", peakReads));
+                new CaseResult.Metric("Average writes", avgWrites,        TX_PER_MS, /* track regression = */ true),
+                new CaseResult.Metric("Sustained writes", sustainedReads, TX_PER_MS),
+                new CaseResult.Metric("Peak writes", peakReads,           TX_PER_MS));
     }
 
     private void printOutResults( String header )

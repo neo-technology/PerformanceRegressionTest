@@ -132,7 +132,7 @@ public class PerformanceHistoryRepository
         }
         catch ( Exception e )
         {
-            throw new RuntimeException( e );
+            throw new RuntimeException( "Unable to dump performance history to '" +output.getAbsolutePath()+ "'.", e );
         }
     }
 
