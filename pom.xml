@@ -7,7 +7,7 @@
 	</parent>
 
 	<properties>
-		<neo-version>1.8-SNAPSHOT</neo-version>
+		<neo-version>1.9-SNAPSHOT</neo-version>
 		<neo-version-name>${neo-version}</neo-version-name>
 		<storage-folder>${basedir}/tarpit</storage-folder>
 		<jvm-memory>768M</jvm-memory>
@@ -31,6 +31,13 @@
 			<version>${neo-version}</version>
 		</dependency>
 
+    <dependency>
+      <groupId>org.neo4j</groupId>
+      <artifactId>neo4j-kernel</artifactId>
+      <version>1.9-SNAPSHOT</version>
+      <type>test-jar</type>
+    </dependency>
+
 		<dependency>
 			<groupId>jfree</groupId>
 			<artifactId>jfreechart</artifactId>
@@ -53,11 +60,11 @@
 			<type>jar</type>
 			<scope>compile</scope>
 		</dependency>
-        <dependency>
-            <groupId>org.neo4j</groupId>
-            <artifactId>neo4j-backup</artifactId>
-            <version>1.8-SNAPSHOT</version>
-        </dependency>
+    <dependency>
+       <groupId>org.neo4j</groupId>
+       <artifactId>neo4j-backup</artifactId>
+       <version>1.8-SNAPSHOT</version>
+    </dependency>
 
     <dependency>
       <groupId>org.codehaus.jackson</groupId>
@@ -78,6 +85,20 @@
 							classpathref="maven.plugin.classpath" />
 
 						<property name="classpath" refid="maven.runtime.classpath" />
+
+            <!-- Download data sets that we need -->
+            <if>
+              <not>
+                <available file="databases/cineasts" type="dir"/>
+              </not>
+              <then>
+                <get src="https://dl.dropbox.com/u/47132/cineasts.tar" dest="target/" />
+                <mkdir dir="databases"/>
+                <untar src="target/cineasts.tar" dest="databases/"/>
+              </then>
+            </if>
+
+            <echo>Done downloading databases, running tests.</echo>
 
 						<!-- Run performance tests -->
 						<exec executable="java" output="${log-file}" dir="${project.build.directory}"

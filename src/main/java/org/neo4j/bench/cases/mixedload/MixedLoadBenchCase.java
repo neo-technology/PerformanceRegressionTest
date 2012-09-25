@@ -23,9 +23,11 @@ import static org.neo4j.bench.domain.Units.CORE_API_READ;
 import static org.neo4j.bench.domain.Units.CORE_API_WRITE_TRANSACTION;
 import static org.neo4j.bench.domain.Units.MILLISECOND;
 
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.Random;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -48,6 +50,9 @@ import org.neo4j.bench.domain.CaseResult;
 import org.neo4j.bench.domain.Unit;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.factory.GraphDatabaseFactory;
+import org.neo4j.graphdb.factory.GraphDatabaseSetting;
+import org.neo4j.graphdb.factory.GraphDatabaseSettings;
 
 /**
  * The main driver for the operation performer threads. Keeps the probabilities
@@ -91,7 +96,7 @@ public class MixedLoadBenchCase implements BenchmarkCase
 
     private long concurrentFinishTime;
 
-    public MixedLoadBenchCase( long timeToRun, GraphDatabaseService db )
+    public MixedLoadBenchCase( long timeToRun )
     {
         simpleTasks = new LinkedList<Future<int[]>>();
         bulkTasks = new LinkedList<Future<int[]>>();
@@ -99,14 +104,28 @@ public class MixedLoadBenchCase implements BenchmarkCase
         nodes = new ConcurrentLinkedQueue<Node>();
         readTasksExecuted = 0;
         writeTasksExecuted = 0;
-        this.graphDb = db;
     }
-
-
 
     public Queue<Node> getNodeQueue()
     {
         return nodes;
+    }
+
+    @Override
+    public void setUp()
+    {
+        Map<String, String> props = new HashMap<String, String>();
+        props.put( GraphDatabaseSettings.use_memory_mapped_buffers.name(), GraphDatabaseSetting.TRUE );
+        graphDb = new GraphDatabaseFactory().newEmbeddedDatabaseBuilder( "db" ).
+                setConfig( GraphDatabaseSettings.use_memory_mapped_buffers, GraphDatabaseSetting.TRUE ).
+                loadPropertiesFromFile( "../config.props" ).
+                newGraphDatabase();
+    }
+
+    @Override
+    public void tearDown()
+    {
+        graphDb.shutdown();
     }
 
     public CaseResult run( )

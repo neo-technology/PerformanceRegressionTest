@@ -21,8 +21,6 @@ package org.neo4j.bench.regression.main;
 
 import java.io.File;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.neo4j.bench.cases.BenchmarkCase;
 import org.neo4j.bench.cases.mixedload.MixedLoadBenchCase;
@@ -30,10 +28,6 @@ import org.neo4j.bench.domain.RunResult;
 import org.neo4j.bench.regression.PerformanceHistoryRepository;
 import org.neo4j.bench.regression.RegressionDetector;
 import org.neo4j.bench.regression.RegressionReport;
-import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.graphdb.factory.GraphDatabaseFactory;
-import org.neo4j.graphdb.factory.GraphDatabaseSetting;
-import org.neo4j.graphdb.factory.GraphDatabaseSettings;
 import org.neo4j.helpers.Args;
 
 /* @SuppressWarnings( "restriction" ) // for the signal */
@@ -55,24 +49,25 @@ public class Main
         boolean onlyCompareToGAReleases = Boolean.parseBoolean( argz.get( "only-compare-to-ga", "true" ) ); /* Compare performance only to GA releases */
 
         // Components
-        final GraphDatabaseService db = createDb();
         PerformanceHistoryRepository history = new PerformanceHistoryRepository(argz.get(OPS_PER_SECOND_FILE_ARG, "ops-per-second"));
         RegressionDetector regressionDetector = new RegressionDetector(threshold);
 
         // Benchmark
         BenchmarkCase [] benchmarks = new BenchmarkCase[] {
-            new MixedLoadBenchCase( timeToRun, db )
+            //new CineastsQueriesBenchmark(),
+            new MixedLoadBenchCase( timeToRun )
         };
 
         RunResult results = new RunResult(neoVersion, new Date(), buildUrl);
         for(BenchmarkCase benchCase : benchmarks)
         {
-            results.addResult( benchCase.run() );
+            benchCase.setUp();
+            try {
+                results.addResult( benchCase.run() );
+            } finally {
+                benchCase.tearDown();
+            }
         }
-
-        // TODO: Each test should be expected to set up and tear down its own infrastructure
-        db.shutdown();
-        //ConsistencyCheck.main("db");          // Commented out to allow testing against 1.7
 
         // Save results
         history.save( results );
@@ -86,16 +81,6 @@ public class Main
             System.out.println(regressionReport);
             System.exit(1);
         }
-    }
-
-    private static GraphDatabaseService createDb()
-    {
-        Map<String, String> props = new HashMap<String, String>();
-        props.put( GraphDatabaseSettings.use_memory_mapped_buffers.name(), GraphDatabaseSetting.TRUE );
-        return new GraphDatabaseFactory().newEmbeddedDatabaseBuilder( "db" ).
-                setConfig( GraphDatabaseSettings.use_memory_mapped_buffers, GraphDatabaseSetting.TRUE ).
-                loadPropertiesFromFile( "../config.props" ).
-                newGraphDatabase();
     }
 
     /*

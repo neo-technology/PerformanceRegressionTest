@@ -24,6 +24,9 @@ import org.neo4j.bench.domain.CaseResult;
 public interface BenchmarkCase
 {
 
+    public void setUp();
+    public void tearDown();
+
     public CaseResult run();
 
 }

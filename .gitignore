@@ -15,3 +15,4 @@ history/
 *.iws
 .externalToolBuilders/
 .DS_store
+databases
