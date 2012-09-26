@@ -34,13 +34,13 @@ import org.neo4j.graphdb.GraphDatabaseService;
 
 public class CineastsQueriesBenchmark implements BenchmarkCase
 {
-//    public static final String SINGLE_PATH_WITH_MANY_START_POINTS_QUERY =
-//            "START lisa=node:Person(\"name:Lisa*\"), " +
-//            "kevin=node(759)\n" +
-//            "match list-[:ACTS_IN]->movie<-[:ACTS_IN]-()-[:ACTS_IN]->movie2<-[:ACTS_IN]-kevin\n" +
-//            "RETURN count(*)";
+    public static final String SINGLE_PATH_WITH_MANY_START_POINTS_QUERY =
+            "START lisa=node:Person(\"name:Lisa*\"), " +
+            "      kevin=node(759)\n" +
+            "match lisa-[:ACTS_IN]->movie<-[:ACTS_IN]-()-[:ACTS_IN]->movie2<-[:ACTS_IN]-kevin\n" +
+            "RETURN count(*)";
 
-    public static final String SINGLE_PATH_WITH_MANY_START_POINTS_QUERY = "START n=node(0) return n";
+    // public static final String SINGLE_PATH_WITH_MANY_START_POINTS_QUERY = "START n=node(0) return n";
 
 
     private GraphDatabaseService db;
@@ -64,8 +64,7 @@ public class CineastsQueriesBenchmark implements BenchmarkCase
     @Override
     public CaseResult run()
     {
-
-        benchmarkQuery("Single path with many start points", SINGLE_PATH_WITH_MANY_START_POINTS_QUERY, 5);
+        benchmarkQuery( "Single path with many start points", SINGLE_PATH_WITH_MANY_START_POINTS_QUERY, 100 );
 
         return new CaseResult( getClass().getSimpleName(), metrics.toArray( new CaseResult.Metric[metrics.size()] ) );
     }

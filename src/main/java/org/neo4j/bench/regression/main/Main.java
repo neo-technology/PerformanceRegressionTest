@@ -23,6 +23,7 @@ import java.io.File;
 import java.util.Date;
 
 import org.neo4j.bench.cases.BenchmarkCase;
+import org.neo4j.bench.cases.cypher.CineastsQueriesBenchmark;
 import org.neo4j.bench.cases.mixedload.MixedLoadBenchCase;
 import org.neo4j.bench.domain.RunResult;
 import org.neo4j.bench.regression.PerformanceHistoryRepository;
@@ -42,7 +43,6 @@ public class Main
         // Arguments
         Args argz = new Args( args );
         long timeToRun = Long.parseLong( argz.get( "time-to-run", "60" ) ); /* Time in minutes */
-        String chartFilename = argz.get( CHART_FILE_ARG, "chart.png" );
         double threshold = Double.parseDouble( argz.get( "threshold", "0.1" ) );
         String neoVersion = argz.get( "neo4j-version", "N/A" );
         String buildUrl = argz.get( "build-url", "Unknown build url" );
@@ -54,7 +54,7 @@ public class Main
 
         // Benchmark
         BenchmarkCase [] benchmarks = new BenchmarkCase[] {
-            //new CineastsQueriesBenchmark(),
+            new CineastsQueriesBenchmark(),
             new MixedLoadBenchCase( timeToRun )
         };
 
