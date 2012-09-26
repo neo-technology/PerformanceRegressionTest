@@ -40,8 +40,6 @@ public class CineastsQueriesBenchmark implements BenchmarkCase
             "match lisa-[:ACTS_IN]->movie<-[:ACTS_IN]-()-[:ACTS_IN]->movie2<-[:ACTS_IN]-kevin\n" +
             "RETURN count(*)";
 
-    // public static final String SINGLE_PATH_WITH_MANY_START_POINTS_QUERY = "START n=node(0) return n";
-
 
     private GraphDatabaseService db;
     private ExecutionEngine cypher;
