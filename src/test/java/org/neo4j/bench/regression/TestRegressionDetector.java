@@ -19,19 +19,21 @@
  */
 package org.neo4j.bench.regression;
 
-import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
-
-import java.util.Date;
-
 import org.junit.Test;
 import org.neo4j.bench.domain.CaseResult;
 import org.neo4j.bench.domain.RunResult;
 import org.neo4j.bench.domain.RunResultSet;
+import org.neo4j.bench.domain.Unit;
+
+import java.util.Date;
+
+import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertThat;
+import static org.junit.internal.matchers.StringContains.containsString;
 
 public class TestRegressionDetector
 {
-
+    private Unit unit = new Unit("Some unit");
     @Test
     public void shouldDetectRegression() throws Exception
     {
@@ -39,14 +41,14 @@ public class TestRegressionDetector
         RegressionDetector detector = new RegressionDetector(0.1);
 
         RunResult oldAndBetterResult = new RunResult( "1.0", new Date( 337, 0, 1 ), "http://build/1" );
-        oldAndBetterResult.addResult( new CaseResult( "Perftest 1", new CaseResult.Metric("Fastness metric", 10.0, true) ) );
+        oldAndBetterResult.addResult( new CaseResult( "Perftest 1", new CaseResult.Metric("Fastness metric", 10.0, unit, true) ) );
 
         RunResult oldOkResult = new RunResult( "1.0", new Date( 337, 0, 1 ), "http://build/2");
-        oldOkResult.addResult( new CaseResult( "Perftest 1", new CaseResult.Metric("Fastness metric", 8.0, true) ) );
+        oldOkResult.addResult( new CaseResult( "Perftest 1", new CaseResult.Metric("Fastness metric", 8.0, unit, true) ) );
 
 
         RunResult newAndShittyResult = new RunResult( "1.1", new Date( 337, 0, 1 ), "http://build/3");
-        newAndShittyResult.addResult( new CaseResult( "Perftest 1", new CaseResult.Metric("Fastness metric", 1.0, true) ) );
+        newAndShittyResult.addResult( new CaseResult( "Perftest 1", new CaseResult.Metric("Fastness metric", 1.0, unit, true) ) );
 
         RunResultSet historicResults = new RunResultSet( oldAndBetterResult, oldOkResult );
 
@@ -55,7 +57,7 @@ public class TestRegressionDetector
 
         // Then
         assertThat(report.regressionDetected(), is(true));
-        assertThat(report.toString(), is(
+        assertThat(report.toString(), containsString(
                 "REGRESSION REPORT\n" +
                 "-----------------\n" +
                 "Tested version 1.1 on Sun Jan 01 00:00:00 CET 2237.\n" +
@@ -76,12 +78,11 @@ public class TestRegressionDetector
         RegressionDetector detector = new RegressionDetector( 1.0 );
 
         RunResult oldOkResult = new RunResult( "1.0", new Date( 337, 0, 1 ), "http://build/2");
-        oldOkResult.addResult( new CaseResult( "Perftest 1", new CaseResult.Metric("Fastness metric", 10.0, true) ) );
+        oldOkResult.addResult( new CaseResult( "Perftest 1", new CaseResult.Metric("Fastness metric", 10.0, unit, true) ) );
 
 
         RunResult newResult = new RunResult( "1.1", new Date( 337, 0, 1 ), "http://build/3");
-        newResult.addResult( new CaseResult( "Perftest 1", new CaseResult.Metric( "Fastness metric", 1.0,
-                true ) ) );
+        newResult.addResult( new CaseResult( "Perftest 1", new CaseResult.Metric( "Fastness metric", 1.0, unit, true ) ) );
 
         RunResultSet historicResults = new RunResultSet( oldOkResult );
 

@@ -19,24 +19,25 @@
  */
 package org.neo4j.bench;
 
-import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
+import org.junit.Before;
+import org.junit.Test;
+import org.neo4j.bench.domain.CaseResult;
+import org.neo4j.bench.domain.RunResult;
+import org.neo4j.bench.domain.RunResultSet;
+import org.neo4j.bench.domain.Unit;
+import org.neo4j.bench.regression.PerformanceHistoryRepository;
+import org.neo4j.kernel.impl.util.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Date;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.neo4j.bench.domain.CaseResult;
-import org.neo4j.bench.domain.RunResult;
-import org.neo4j.bench.regression.PerformanceHistoryRepository;
-import org.neo4j.bench.domain.RunResultSet;
-import org.neo4j.kernel.impl.util.FileUtils;
+import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertThat;
 
 public class TestPerformanceHistoryRepository
 {
-
+    private Unit unit = new Unit("Some unit");
     private File historyDir = new File( "target/test/historyfilter" );
 
     @Before
@@ -54,10 +55,10 @@ public class TestPerformanceHistoryRepository
         Date timestamp = new Date( );
 
         RunResult results = new RunResult( "1.3.37", timestamp, "http://build/1" );
-        results.addResult( new CaseResult( "Hello", new CaseResult.Metric("The metric name", 1337.0) )  );
+        results.addResult( new CaseResult( "Hello", new CaseResult.Metric("The metric name", 1337.0, unit) )  );
         repo.save( results );
 
-        assertThat(new File( "target/test/history/" + timestamp.getTime() + "-1.3.37.json" ).exists(), is(true));
+        assertThat(new File( "target/test/historyfilter/" + timestamp.getTime() + "-1.3.37.json" ).exists(), is(true));
 
     }
 
@@ -68,7 +69,7 @@ public class TestPerformanceHistoryRepository
         PerformanceHistoryRepository repo = new PerformanceHistoryRepository( historyDir.getPath() );
 
         RunResult results = new RunResult( "1.3.37", new Date( ), "http://build/1");
-        results.addResult( new CaseResult( "Hello", new CaseResult.Metric("The metric name", 1337.0) )  );
+        results.addResult( new CaseResult( "Hello", new CaseResult.Metric("The metric name", 1337.0, unit) )  );
 
         repo.save( results );
         repo.save( new RunResult( "1.3.37-SNAPSHOT", new Date( ), "http://build/1") );
