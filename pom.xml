@@ -7,7 +7,7 @@
 	</parent>
 
 	<properties>
-		<neo-version>1.9-SNAPSHOT</neo-version>
+		<neo-version>RELEASE</neo-version>
 		<neo-version-name>${neo-version}</neo-version-name>
 		<storage-folder>${basedir}/tarpit</storage-folder>
 		<jvm-memory>768M</jvm-memory>
@@ -34,7 +34,7 @@
     <dependency>
       <groupId>org.neo4j</groupId>
       <artifactId>neo4j-kernel</artifactId>
-      <version>1.9-SNAPSHOT</version>
+      <version>${neo-version}</version>
       <type>test-jar</type>
     </dependency>
 
@@ -64,7 +64,7 @@
     <dependency>
        <groupId>org.neo4j</groupId>
        <artifactId>neo4j-backup</artifactId>
-       <version>1.8-SNAPSHOT</version>
+       <version>${neo-version}</version>
     </dependency>
     <dependency>
         <groupId>junit</groupId>
