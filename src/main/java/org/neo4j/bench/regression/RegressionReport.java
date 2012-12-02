@@ -27,6 +27,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.neo4j.bench.domain.CaseResult;
 import org.neo4j.bench.domain.RunResult;
 import org.neo4j.graphdb.NotFoundException;
 
@@ -72,13 +73,17 @@ public class RegressionReport
             StringWriter sw = new StringWriter(  );
             PrintWriter out = new PrintWriter( sw );
 
-            double trumpingValue = trumpingRun.getMetric( caseName, metricName ).getValue();
-            double regressedValue = regressedRun.getMetric( caseName, metricName ).getValue();
+            CaseResult.Metric trumpingMetric = trumpingRun.getMetric( caseName, metricName );
+            CaseResult.Metric regressedMetric = regressedRun.getMetric( caseName, metricName );
+
+            double trumpingValue = trumpingMetric.getValue();
+            double regressedValue = regressedMetric.getValue();
+            double maxAllowedRegression = trumpingMetric.calculateAllowedRegression( threshold );
 
             out.printf( "%sMetric: '%s' has regressed since version %s (%s)\n", prefix, metricName, trumpingRun.getTestedVersion(), trumpingRun.getBuildUrl());
             out.printf( "%s  Was: %.4f\n", prefix, trumpingValue);
             out.printf( "%s  Is now: %.4f\n", prefix, regressedValue);
-            out.printf( "%s  (Needs to be at least %.4f)\n",  prefix, trumpingValue - threshold * trumpingValue);
+            out.printf( "%s  (Needs to be at least %.4f)\n",  prefix, maxAllowedRegression );
 
             return sw.toString();
         }

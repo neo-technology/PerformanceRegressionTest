@@ -73,8 +73,6 @@ public class RegressionDetector
 
     private boolean hasRegressedMoreThanThreshold( Metric currentMetric, Metric bestHistoricValue )
     {
-        return currentMetric.compareTo( bestHistoricValue ) > 0 &&
-               // Ensure that the difference between the values, disregarding in what "direction" is greater than the threshold allows
-               Math.abs( bestHistoricValue.getValue() - currentMetric.getValue() ) > Math.abs( bestHistoricValue.getValue() * threshold );
+        return currentMetric.hasRegressedFrom(bestHistoricValue, threshold);
     }
 }

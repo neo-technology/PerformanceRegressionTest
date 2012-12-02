@@ -32,24 +32,85 @@ import org.codehaus.jackson.annotate.JsonProperty;
 public class CaseResult
 {
 
+    /**
+     * Determines how to compare two metrics and track regression -
+     * is a smaller value of a given metric better, or is a bigger
+     * value better?
+     */
+    public static enum MetricComparer
+    {
+        BIGGER_IS_BETTER
+                {
+                    @Override
+                    public boolean valueHasRegressed( Double newValue, Double oldValue, double threshold )
+                    {
+                        return newValue < calculateAllowedRegression( oldValue, threshold );
+                    }
+
+                    @Override
+                    public int compare( Double firstValue, Double secondValue )
+                    {
+                        return secondValue.compareTo( firstValue );
+                    }
+
+                    @Override
+                    public double calculateAllowedRegression( Double value, double threshold )
+                    {
+                        return value - value * threshold;
+                    }
+                },
+        SMALLER_IS_BETTER
+                {
+                    @Override
+                    public boolean valueHasRegressed( Double newValue, Double oldValue, double threshold )
+                    {
+                        return newValue > calculateAllowedRegression( oldValue, threshold );
+                    }
+
+                    @Override
+                    public double calculateAllowedRegression( Double value, double threshold )
+                    {
+                        return value + value * threshold;
+                    }
+
+                    @Override
+                    public int compare( Double firstValue, Double secondValue )
+                    {
+                        return firstValue.compareTo( secondValue );
+                    }
+                };
+
+        public abstract int compare( Double firstValue, Double secondValue );
+
+        public abstract double calculateAllowedRegression( Double value, double threshold );
+
+        public abstract boolean valueHasRegressed( Double newValue, Double oldValue, double threshold );
+    }
+
     public static class Metric implements Comparable<Metric>
     {
-        private String name;
-        private Double value;
-        private boolean trackRegression;
-        private Unit unit;
+        @JsonProperty private final String name;
+        @JsonProperty private final Double value;
+        @JsonProperty private final boolean trackRegression;
+        @JsonProperty private final Unit unit;
+        @JsonProperty private final MetricComparer comparer;
 
-        public Metric( String name, double value, Unit unit )
+        public Metric( String name, double value, Unit unit, MetricComparer comparer )
         {
-            this(name, value, unit, false);
+            this(name, value, unit, false, comparer );
         }
 
-        public Metric( @JsonProperty("name") String name, @JsonProperty("value") double value, @JsonProperty("unit") Unit unit , @JsonProperty("trackRegression") boolean trackRegression)
+        public Metric( @JsonProperty("name") String name,
+                       @JsonProperty("value") double value,
+                       @JsonProperty("unit") Unit unit ,
+                       @JsonProperty("trackRegression") boolean trackRegression,
+                       @JsonProperty("comparer") MetricComparer comparer )
         {
             this.name = name;
             this.value = value;
             this.trackRegression = trackRegression;
             this.unit = unit != null ? unit : backwardsCompatUnit();
+            this.comparer = comparer != null? comparer : backwardsCompatComparer();
         }
 
         public String getName()
@@ -62,11 +123,6 @@ public class CaseResult
             return value;
         }
 
-        public Unit getUnit()
-        {
-            return unit;
-        }
-
         public boolean shouldTrackRegression()
         {
             return trackRegression;
@@ -75,7 +131,17 @@ public class CaseResult
         @Override
         public int compareTo( Metric other )
         {
-            return other.value.compareTo( value );
+            return comparer.compare( value, other.value );
+        }
+
+        public double calculateAllowedRegression( double threshold )
+        {
+            return comparer.calculateAllowedRegression(value, threshold);
+        }
+
+        public boolean hasRegressedFrom( Metric other, double threshold )
+        {
+            return comparer.valueHasRegressed(value, other.value, threshold);
         }
 
         /**
@@ -91,6 +157,17 @@ public class CaseResult
             } else
             {
                 return CORE_API_WRITE_TRANSACTION.per( MILLISECOND );
+            }
+        }
+
+        private MetricComparer backwardsCompatComparer()
+        {
+            if(name.contains( "Average for: Single path with many start points" ))
+            {
+                return MetricComparer.SMALLER_IS_BETTER;
+            } else
+            {
+                return MetricComparer.BIGGER_IS_BETTER;
             }
         }
     }

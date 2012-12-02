@@ -19,36 +19,33 @@
  */
 package org.neo4j.bench.regression;
 
+import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.*;
+import static org.junit.internal.matchers.StringContains.containsString;
+import static org.neo4j.bench.domain.CaseResult.MetricComparer.BIGGER_IS_BETTER;
+import static org.neo4j.bench.domain.CaseResult.MetricComparer.SMALLER_IS_BETTER;
+
+import java.util.Date;
+
 import org.junit.Test;
 import org.neo4j.bench.domain.CaseResult;
 import org.neo4j.bench.domain.RunResult;
 import org.neo4j.bench.domain.RunResultSet;
 import org.neo4j.bench.domain.Unit;
 
-import java.util.Date;
-
-import static org.hamcrest.core.Is.is;
-import static org.junit.Assert.assertThat;
-import static org.junit.internal.matchers.StringContains.containsString;
-
 public class TestRegressionDetector
 {
     private Unit unit = new Unit("Some unit");
+
     @Test
-    public void shouldDetectRegression() throws Exception
+    public void shouldDetectRegressionInBiggerIsBetterMetric() throws Exception
     {
         // Given
         RegressionDetector detector = new RegressionDetector(0.1);
 
-        RunResult oldAndBetterResult = new RunResult( "1.0", new Date( 337, 0, 1 ), "http://build/1" );
-        oldAndBetterResult.addResult( new CaseResult( "Perftest 1", new CaseResult.Metric("Fastness metric", 10.0, unit, true) ) );
-
-        RunResult oldOkResult = new RunResult( "1.0", new Date( 337, 0, 1 ), "http://build/2");
-        oldOkResult.addResult( new CaseResult( "Perftest 1", new CaseResult.Metric("Fastness metric", 8.0, unit, true) ) );
-
-
-        RunResult newAndShittyResult = new RunResult( "1.1", new Date( 337, 0, 1 ), "http://build/3");
-        newAndShittyResult.addResult( new CaseResult( "Perftest 1", new CaseResult.Metric("Fastness metric", 1.0, unit, true) ) );
+        RunResult oldAndBetterResult = runResult("1.0", new Date( 337, 0, 1 ), "http://build/1", 10.0, BIGGER_IS_BETTER);
+        RunResult oldOkResult = runResult( "1.0", new Date( 337, 0, 1 ), "http://build/2", 8.0, BIGGER_IS_BETTER );
+        RunResult newAndShittyResult = runResult("1.1", new Date( 337, 0, 1 ), "http://build/3", 1.0, BIGGER_IS_BETTER);
 
         RunResultSet historicResults = new RunResultSet( oldAndBetterResult, oldOkResult );
 
@@ -75,14 +72,10 @@ public class TestRegressionDetector
     public void shouldNotDetectRegressionBelowThreshold() throws Exception
     {
         // Given
-        RegressionDetector detector = new RegressionDetector( 1.0 );
+        RegressionDetector detector = new RegressionDetector( 0.5 );
 
-        RunResult oldOkResult = new RunResult( "1.0", new Date( 337, 0, 1 ), "http://build/2");
-        oldOkResult.addResult( new CaseResult( "Perftest 1", new CaseResult.Metric("Fastness metric", 10.0, unit, true) ) );
-
-
-        RunResult newResult = new RunResult( "1.1", new Date( 337, 0, 1 ), "http://build/3");
-        newResult.addResult( new CaseResult( "Perftest 1", new CaseResult.Metric( "Fastness metric", 1.0, unit, true ) ) );
+        RunResult oldOkResult = runResult("1.0", new Date( 337, 0, 1 ), "http://build/2", 10.0,  BIGGER_IS_BETTER);
+        RunResult newResult = runResult( "1.1", new Date( 337, 0, 1 ), "http://build/3", 6.0, BIGGER_IS_BETTER );
 
         RunResultSet historicResults = new RunResultSet( oldOkResult );
 
@@ -91,5 +84,64 @@ public class TestRegressionDetector
 
         // Then
         assertThat( "no regression should have been detected", report.regressionDetected(), is( false ) );
+    }
+
+    @Test
+    public void shouldDetectRegressionInSmallerIsBetterMetric() throws Exception
+    {
+        // Given
+        RegressionDetector detector = new RegressionDetector(0.1);
+
+        RunResult oldAndBetterResult = runResult("1.0", new Date( 337, 0, 1 ), "http://build/1", 1.0, SMALLER_IS_BETTER);
+        RunResult oldOkResult = runResult( "1.0", new Date( 337, 0, 1 ), "http://build/2", 1.1, SMALLER_IS_BETTER );
+        RunResult newAndShittyResult = runResult("1.1", new Date( 337, 0, 1 ), "http://build/3", 10.0, SMALLER_IS_BETTER);
+
+        RunResultSet historicResults = new RunResultSet( oldAndBetterResult, oldOkResult );
+
+        // When
+        RegressionReport report = detector.detectRegression( historicResults, newAndShittyResult );
+
+        // Then
+        assertThat( report.regressionDetected(), is( true ) );
+        assertThat(report.toString(), containsString(
+                "REGRESSION REPORT\n" +
+                        "-----------------\n" +
+                        "Tested version 1.1 on Sun Jan 01 00:00:00 CET 2237.\n" +
+                        "http://build/3\n" +
+                        "1 metric(s) have regressed.\n" +
+                        "\n" +
+                        "Case: 'Perftest 1'\n" +
+                        "  Metric: 'Fastness metric' has regressed since version 1.0 (http://build/1)\n" +
+                        "    Was: 1.0000\n" +
+                        "    Is now: 10.0000\n" +
+                        "    (Needs to be at least 1.1000)\n" ) );
+    }
+
+    @Test
+    public void shouldNotDetectRegressionBelowThresholdForSmallerIsBetterMetric() throws Exception
+    {
+        // Given
+        RegressionDetector detector = new RegressionDetector( 0.5 );
+
+        RunResult oldOkResult = runResult("1.0", new Date( 337, 0, 1 ), "http://build/2", 1.0,  SMALLER_IS_BETTER);
+        RunResult newResult = runResult( "1.1", new Date( 337, 0, 1 ), "http://build/3", 1.4,    SMALLER_IS_BETTER );
+
+        RunResultSet historicResults = new RunResultSet( oldOkResult );
+
+        // When
+        RegressionReport report = detector.detectRegression( historicResults, newResult );
+
+        // Then
+        assertThat( "no regression should have been detected", report.regressionDetected(), is( false ) );
+    }
+
+
+    private RunResult runResult( String version, Date date, String buildUrl, double value, CaseResult.MetricComparer
+            metricComparer )
+    {
+        RunResult result = new RunResult( version, date, buildUrl );
+        result.addResult( new CaseResult( "Perftest 1", new CaseResult.Metric( "Fastness metric", value,
+                unit, true, metricComparer ) ) );
+        return result;
     }
 }

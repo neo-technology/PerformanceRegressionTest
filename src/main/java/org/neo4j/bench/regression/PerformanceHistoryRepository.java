@@ -113,28 +113,4 @@ public class PerformanceHistoryRepository
         return runResult;
     }
 
-    /**
-     * Dump performance history to a single file.
-     * @param output
-     */
-    public void dumpTo(File output)
-    {
-        try
-        {
-            if(!output.exists())
-            {
-                if(output.getAbsoluteFile().getParentFile() != null)
-                    output.getAbsoluteFile().getParentFile().mkdirs();
-                output.createNewFile();
-            }
-
-            jsonWriter.writeValue( output, getResults() );
-        }
-        catch ( Exception e )
-        {
-            throw new RuntimeException( "Unable to dump performance history to '" +output.getAbsolutePath()+ "'.", e );
-        }
-    }
-
-
 }

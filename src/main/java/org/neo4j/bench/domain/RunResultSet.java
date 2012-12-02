@@ -21,6 +21,7 @@ package org.neo4j.bench.domain;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
 import org.codehaus.jackson.annotate.JsonProperty;
@@ -30,7 +31,7 @@ import org.neo4j.helpers.Pair;
 /**
  * A collection of {@link RunResult}s.
  */
-public class RunResultSet
+public class RunResultSet implements Iterable<RunResult>
 {
 
     @JsonProperty private List<RunResult> results;
@@ -90,5 +91,11 @@ public class RunResultSet
         }
 
         return Pair.of( highest, bestRun );
+    }
+
+    @Override
+    public Iterator<RunResult> iterator()
+    {
+        return results.iterator();
     }
 }

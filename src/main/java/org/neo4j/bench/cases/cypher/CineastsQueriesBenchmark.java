@@ -21,6 +21,7 @@ package org.neo4j.bench.cases.cypher;
 
 import static java.lang.System.currentTimeMillis;
 import static org.neo4j.bench.PrepopulatedGraphDatabaseFactory.create;
+import static org.neo4j.bench.domain.CaseResult.MetricComparer.SMALLER_IS_BETTER;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -83,6 +84,6 @@ public class CineastsQueriesBenchmark implements BenchmarkCase
         long end = currentTimeMillis();
 
         double deltaTime = (end - begin*1.0 ) / timesToRun;
-        metrics.add( new CaseResult.Metric( "Average for: " + name, deltaTime, Units.MILLISECOND, /* track regression = */ true ) );
+        metrics.add( new CaseResult.Metric( "Average for: " + name, deltaTime, Units.MILLISECOND, /* track regression = */ true, SMALLER_IS_BETTER  ) );
     }
 }

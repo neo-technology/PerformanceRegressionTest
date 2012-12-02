@@ -22,6 +22,8 @@ package org.neo4j.bench.regression.main;
 import java.io.File;
 import java.util.Date;
 
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.map.ObjectWriter;
 import org.neo4j.bench.cases.BenchmarkCase;
 import org.neo4j.bench.cases.cypher.CineastsQueriesBenchmark;
 import org.neo4j.bench.cases.mixedload.MixedLoadBenchCase;
@@ -31,12 +33,10 @@ import org.neo4j.bench.regression.RegressionDetector;
 import org.neo4j.bench.regression.RegressionReport;
 import org.neo4j.helpers.Args;
 
-/* @SuppressWarnings( "restriction" ) // for the signal */
 public class Main
 {
 
     public static final String OPS_PER_SECOND_FILE_ARG = "ops-per-sec-file";
-    public static final String CHART_FILE_ARG = "chart-file";
 
     public static void main( String[] args ) throws Exception
     {
@@ -46,7 +46,6 @@ public class Main
         double threshold = Double.parseDouble( argz.get( "threshold", "0.1" ) );
         String neoVersion = argz.get( "neo4j-version", "N/A" );
         String buildUrl = argz.get( "build-url", "Unknown build url" );
-        boolean onlyCompareToGAReleases = Boolean.parseBoolean( argz.get( "only-compare-to-ga", "true" ) ); /* Compare performance only to GA releases */
 
         // Components
         PerformanceHistoryRepository history = new PerformanceHistoryRepository(argz.get(OPS_PER_SECOND_FILE_ARG, "ops-per-second"));
@@ -71,7 +70,7 @@ public class Main
 
         // Save results
         history.save( results );
-        history.dumpTo( new File( "performance-history.json" ) );
+        exportHistory( new File( "performance-history.json" ), history );
 
         // Check for regression
         RegressionReport regressionReport = regressionDetector.detectRegression( history.getResults(), results );
@@ -83,24 +82,28 @@ public class Main
         }
     }
 
-    /*
-    * Commented out because it breaks windows but it is nice to have for
-    * testing on real OSes
-   SignalHandler handler = new SignalHandler()
-   {
-       @Override
-       public void handle( Signal arg0 )
-       {
-           System.out.println( "Queued nodes currently : "
-                   + myCase.getNodeQueue().size() );
-       }
-   };
-   // SIGUSR1 is used by the JVM and INT, ABRT and friends
-   // are all defined for specific usage by POSIX. While SIGINT
-   // is conveniently issued by Ctrl-C, SIGUSR2 is for user defined
-   // behavior so this is what I use.
+    /**
+     * Exports history to a format the dashboard understands.
+     * @param output
+     * @param history
+     */
+    public static void exportHistory( File output, PerformanceHistoryRepository history )
+    {
+        ObjectWriter jsonWriter = new ObjectMapper().defaultPrettyPrintingWriter();
+        try
+        {
+            if(!output.exists())
+            {
+                if(output.getAbsoluteFile().getParentFile() != null)
+                    output.getAbsoluteFile().getParentFile().mkdirs();
+                output.createNewFile();
+            }
 
-   Signal signal = new Signal( "USR2" );
-   Signal.handle( signal, handler );
-    */
+            jsonWriter.writeValue( output, history.getResults() );
+        }
+        catch ( Exception e )
+        {
+            throw new RuntimeException( "Unable to dump performance history to '" +output.getAbsolutePath()+ "'.", e );
+        }
+    }
 }

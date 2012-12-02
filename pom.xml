@@ -43,16 +43,19 @@
 			<artifactId>jfreechart</artifactId>
 			<version>1.0.12</version>
 		</dependency>
+
 		<dependency>
 			<groupId>javax.servlet</groupId>
 			<artifactId>servlet-api</artifactId>
 			<version>2.5</version>
 		</dependency>
+
 		<dependency>
 			<groupId>org.mortbay.jetty</groupId>
 			<artifactId>jetty</artifactId>
 			<version>6.1.22</version>
 		</dependency>
+
 		<dependency>
 			<groupId>javax.mail</groupId>
 			<artifactId>mail</artifactId>
@@ -62,13 +65,9 @@
 		</dependency>
 
     <dependency>
-       <groupId>org.neo4j</groupId>
-       <artifactId>neo4j-backup</artifactId>
-       <version>${neo-version}</version>
-    </dependency>
-    <dependency>
         <groupId>junit</groupId>
         <artifactId>junit</artifactId>
+        <scope>test</scope>
     </dependency>
 
     <dependency>

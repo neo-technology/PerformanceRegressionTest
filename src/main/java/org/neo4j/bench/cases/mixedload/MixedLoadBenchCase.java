@@ -19,6 +19,7 @@
  */
 package org.neo4j.bench.cases.mixedload;
 
+import static org.neo4j.bench.domain.CaseResult.MetricComparer.BIGGER_IS_BETTER;
 import static org.neo4j.bench.domain.Units.CORE_API_READ;
 import static org.neo4j.bench.domain.Units.CORE_API_WRITE_TRANSACTION;
 import static org.neo4j.bench.domain.Units.MILLISECOND;
@@ -391,13 +392,13 @@ public class MixedLoadBenchCase implements BenchmarkCase
         double avgWrites = totalWrites * 1.0 / ( concurrentFinishTime - startTime );
 
         return new CaseResult(getClass().getSimpleName(),
-                new CaseResult.Metric("Average reads", avgReads,          READS_PER_MS, /* track regression = */ true ),
-                new CaseResult.Metric("Sustained reads", sustainedReads,  READS_PER_MS ),
-                new CaseResult.Metric("Peak reads", peakReads,            READS_PER_MS ),
+                new CaseResult.Metric("Average reads", avgReads,          READS_PER_MS, /* track regression = */ true, BIGGER_IS_BETTER ),
+                new CaseResult.Metric("Sustained reads", sustainedReads,  READS_PER_MS, BIGGER_IS_BETTER  ),
+                new CaseResult.Metric("Peak reads", peakReads,            READS_PER_MS, BIGGER_IS_BETTER  ),
 
-                new CaseResult.Metric("Average writes", avgWrites,        TX_PER_MS, /* track regression = */ true),
-                new CaseResult.Metric("Sustained writes", sustainedReads, TX_PER_MS),
-                new CaseResult.Metric("Peak writes", peakReads,           TX_PER_MS));
+                new CaseResult.Metric("Average writes", avgWrites,        TX_PER_MS, /* track regression = */ true, BIGGER_IS_BETTER ),
+                new CaseResult.Metric("Sustained writes", sustainedReads, TX_PER_MS, BIGGER_IS_BETTER ),
+                new CaseResult.Metric("Peak writes", peakReads,           TX_PER_MS, BIGGER_IS_BETTER ));
     }
 
     private void printOutResults( String header )
