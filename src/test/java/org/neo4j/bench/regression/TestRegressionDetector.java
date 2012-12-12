@@ -32,6 +32,7 @@ import org.neo4j.bench.domain.CaseResult;
 import org.neo4j.bench.domain.RunResult;
 import org.neo4j.bench.domain.RunResultSet;
 import org.neo4j.bench.domain.Unit;
+import org.neo4j.bench.domain.filter.VersionFilter;
 
 public class TestRegressionDetector
 {
@@ -41,7 +42,7 @@ public class TestRegressionDetector
     public void shouldDetectRegressionInBiggerIsBetterMetric() throws Exception
     {
         // Given
-        RegressionDetector detector = new RegressionDetector(0.1);
+        RegressionDetector detector = new RegressionDetector(0.1, VersionFilter.GA_ONLY );
 
         RunResult oldAndBetterResult = runResult("1.0", new Date( 337, 0, 1 ), "http://build/1", 10.0, BIGGER_IS_BETTER);
         RunResult oldOkResult = runResult( "1.0", new Date( 337, 0, 1 ), "http://build/2", 8.0, BIGGER_IS_BETTER );
@@ -72,7 +73,7 @@ public class TestRegressionDetector
     public void shouldNotDetectRegressionBelowThreshold() throws Exception
     {
         // Given
-        RegressionDetector detector = new RegressionDetector( 0.5 );
+        RegressionDetector detector = new RegressionDetector( 0.5, VersionFilter.GA_ONLY );
 
         RunResult oldOkResult = runResult("1.0", new Date( 337, 0, 1 ), "http://build/2", 10.0,  BIGGER_IS_BETTER);
         RunResult newResult = runResult( "1.1", new Date( 337, 0, 1 ), "http://build/3", 6.0, BIGGER_IS_BETTER );
@@ -90,7 +91,7 @@ public class TestRegressionDetector
     public void shouldDetectRegressionInSmallerIsBetterMetric() throws Exception
     {
         // Given
-        RegressionDetector detector = new RegressionDetector(0.1);
+        RegressionDetector detector = new RegressionDetector(0.1, VersionFilter.GA_ONLY );
 
         RunResult oldAndBetterResult = runResult("1.0", new Date( 337, 0, 1 ), "http://build/1", 1.0, SMALLER_IS_BETTER);
         RunResult oldOkResult = runResult( "1.0", new Date( 337, 0, 1 ), "http://build/2", 1.1, SMALLER_IS_BETTER );
@@ -121,7 +122,7 @@ public class TestRegressionDetector
     public void shouldNotDetectRegressionBelowThresholdForSmallerIsBetterMetric() throws Exception
     {
         // Given
-        RegressionDetector detector = new RegressionDetector( 0.5 );
+        RegressionDetector detector = new RegressionDetector( 0.5, VersionFilter.GA_ONLY );
 
         RunResult oldOkResult = runResult("1.0", new Date( 337, 0, 1 ), "http://build/2", 1.0,  SMALLER_IS_BETTER);
         RunResult newResult = runResult( "1.1", new Date( 337, 0, 1 ), "http://build/3", 1.4,    SMALLER_IS_BETTER );
@@ -130,6 +131,27 @@ public class TestRegressionDetector
 
         // When
         RegressionReport report = detector.detectRegression( historicResults, newResult );
+
+        // Then
+        assertThat( "no regression should have been detected", report.regressionDetected(), is( false ) );
+    }
+
+    @Test
+    public void shouldOnlyDetectRegressionAgainstStableReleases() throws Exception
+    {
+        // Given
+        RegressionDetector detector = new RegressionDetector( 0.1, VersionFilter.GA_ONLY );
+
+        RunResult oldAwesomeSnapshotResult = runResult("1.0-SNAPSHOT", new Date( 337, 0, 1 ), "http://build/2", 1.0, SMALLER_IS_BETTER);
+        RunResult oldBadStableResult = runResult( "1.0", new Date( 337, 0, 1 ), "http://build/3", 10.0, SMALLER_IS_BETTER );
+        RunResult oldAwesomeReleaseResult = runResult( "RELEASE", new Date( 337, 0, 1 ), "http://build/3", 1.1, SMALLER_IS_BETTER );
+
+        RunResultSet historicResults = new RunResultSet( oldAwesomeSnapshotResult, oldBadStableResult, oldAwesomeReleaseResult );
+
+        RunResult okNewResult = runResult( "1.1-SNAPSHOT", new Date( 337, 0, 1 ), "http://build/3", 5.0, SMALLER_IS_BETTER );
+
+        // When
+        RegressionReport report = detector.detectRegression( historicResults, okNewResult );
 
         // Then
         assertThat( "no regression should have been detected", report.regressionDetected(), is( false ) );

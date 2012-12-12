@@ -28,6 +28,7 @@ import org.neo4j.bench.cases.BenchmarkCase;
 import org.neo4j.bench.cases.cypher.CineastsQueriesBenchmark;
 import org.neo4j.bench.cases.mixedload.MixedLoadBenchCase;
 import org.neo4j.bench.domain.RunResult;
+import org.neo4j.bench.domain.filter.VersionFilter;
 import org.neo4j.bench.regression.PerformanceHistoryRepository;
 import org.neo4j.bench.regression.RegressionDetector;
 import org.neo4j.bench.regression.RegressionReport;
@@ -49,7 +50,7 @@ public class Main
 
         // Components
         PerformanceHistoryRepository history = new PerformanceHistoryRepository(argz.get(OPS_PER_SECOND_FILE_ARG, "ops-per-second"));
-        RegressionDetector regressionDetector = new RegressionDetector(threshold);
+        RegressionDetector regressionDetector = new RegressionDetector(threshold, VersionFilter.GA_ONLY );
 
         // Benchmark
         BenchmarkCase [] benchmarks = new BenchmarkCase[] {

@@ -25,16 +25,19 @@ import static org.neo4j.bench.regression.RegressionReport.*;
 import org.neo4j.bench.domain.CaseResult;
 import org.neo4j.bench.domain.RunResult;
 import org.neo4j.bench.domain.RunResultSet;
+import org.neo4j.bench.domain.filter.RunResultFilter;
 import org.neo4j.helpers.Pair;
 
 public class RegressionDetector
 {
 
-    private double threshold;
+    private final double threshold;
+    private final RunResultFilter runsToCompareToFilter;
 
-    public RegressionDetector(double threshold)
+    public RegressionDetector( double threshold, RunResultFilter runsToCompareToFilter )
     {
         this.threshold = threshold;
+        this.runsToCompareToFilter = runsToCompareToFilter;
     }
 
     public RegressionReport detectRegression( RunResultSet historicResults, RunResult currentRun )
@@ -51,7 +54,7 @@ public class RegressionDetector
                     // Check if this metric has ever had a better value
 
                     Pair<Metric, RunResult> resultPair = historicResults.getHighestValueOf(
-                            caseResult.getCaseName(), currentMetric.getName() );
+                            caseResult.getCaseName(), currentMetric.getName(), runsToCompareToFilter );
 
                     Metric bestHistoricValue = resultPair.first();
                     RunResult bestHistoricRun = resultPair.other();

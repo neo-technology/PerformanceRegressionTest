@@ -19,26 +19,27 @@
  */
 package org.neo4j.bench.domain.filter;
 
-public class VersionFilters
+import org.neo4j.bench.domain.RunResult;
+
+public class VersionFilter implements RunResultFilter
 {
 
-    public static RunResultFilter.VersionFilter GA_ONLY = new RunResultFilter.VersionFilter()
-    {
-        @Override
-        public boolean accept( String version )
-        {
-            version = version.toLowerCase();
-            return !version.contains("-snapshot") && !version.contains("m") && !version.contains("rc") && !version.equals("n/a");
-        }
-    };
+    private final String pattern;
 
-    public RunResultFilter.VersionFilter ANY = new RunResultFilter.VersionFilter()
+    public VersionFilter(String pattern)
     {
-        @Override
-        public boolean accept( String version )
-        {
-            return true;
-        }
-    };
 
+        this.pattern = pattern;
+    }
+
+    public boolean accept(RunResult result)
+    {
+        return result.getTestedVersion().matches( pattern );
+    }
+
+    // Built in filters
+
+    public static RunResultFilter GA_ONLY = new VersionFilter( "\\d+\\.\\d+(\\.\\d+)?(GA)?" );
+
+    public static RunResultFilter ANY = new VersionFilter( ".*" );
 }

@@ -26,13 +26,4 @@ public interface RunResultFilter
 
     public boolean accept(RunResult result);
 
-    abstract class VersionFilter implements RunResultFilter
-    {
-        public abstract boolean accept(String version);
-
-        public boolean accept(RunResult result)
-        {
-            return accept( result.getTestedVersion() );
-        }
-    }
 }

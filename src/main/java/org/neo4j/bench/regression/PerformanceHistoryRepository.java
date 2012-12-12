@@ -27,7 +27,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.ObjectWriter;
 import org.neo4j.bench.domain.RunResult;
 import org.neo4j.bench.domain.RunResultSet;
-import org.neo4j.bench.domain.filter.VersionFilters;
+import org.neo4j.bench.domain.filter.VersionFilter;
 
 /**
  * Abstracts storage of performance history. Currently saves history in one json file per performance test run,
@@ -88,7 +88,7 @@ public class PerformanceHistoryRepository
 
     public RunResultSet getResultsForGAReleases()
     {
-       return getResults().filter( VersionFilters.GA_ONLY );
+       return getResults().filter( VersionFilter.GA_ONLY );
     }
 
     public RunResultSet getResults()

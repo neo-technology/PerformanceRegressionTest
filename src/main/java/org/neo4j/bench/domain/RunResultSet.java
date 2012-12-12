@@ -26,6 +26,7 @@ import java.util.List;
 
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.neo4j.bench.domain.filter.RunResultFilter;
+import org.neo4j.bench.domain.filter.VersionFilter;
 import org.neo4j.helpers.Pair;
 
 /**
@@ -77,10 +78,15 @@ public class RunResultSet implements Iterable<RunResult>
 
     public Pair<CaseResult.Metric, RunResult> getHighestValueOf( String caseName, String metricName)
     {
+        return getHighestValueOf( caseName, metricName, VersionFilter.ANY );
+    }
+
+    public Pair<CaseResult.Metric, RunResult> getHighestValueOf( String caseName, String metricName, RunResultFilter filter)
+    {
         CaseResult.Metric highest = null;
         RunResult bestRun = null;
 
-        for(RunResult result : results)
+        for(RunResult result : this.filter( filter ))
         {
             CaseResult.Metric current = result.getMetric(caseName, metricName);
             if(current != null && (highest == null || current.compareTo( highest) < 0))
