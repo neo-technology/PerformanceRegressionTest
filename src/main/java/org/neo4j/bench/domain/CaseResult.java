@@ -109,8 +109,8 @@ public class CaseResult
             this.name = name;
             this.value = value;
             this.trackRegression = trackRegression;
-            this.unit = unit != null ? unit : backwardsCompatUnit();
-            this.comparer = comparer != null? comparer : backwardsCompatComparer();
+            this.unit     = unit     != null ? unit     : backwardsCompatUnit();
+            this.comparer = comparer != null ? comparer : backwardsCompatComparer();
         }
 
         public String getName()
@@ -141,6 +141,16 @@ public class CaseResult
 
         public boolean hasRegressedFrom( Metric other, double threshold )
         {
+            if(other == null)
+            {
+                throw new IllegalArgumentException( "You need to provide a metric to compare regression to, got null.");
+            }
+
+            if(comparer == null)
+            {
+                throw new IllegalStateException( "No comparer set for metric '"+getName()+"'" );
+            }
+
             return comparer.valueHasRegressed(value, other.value, threshold);
         }
 

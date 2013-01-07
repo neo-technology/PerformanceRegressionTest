@@ -22,7 +22,7 @@ package org.neo4j.bench;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
-import static org.junit.Assert.assertThat;
+import static org.junit.Assert.*;
 
 import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.Test;
@@ -58,7 +58,7 @@ public class TestBackwardsCompatResultsDeserialization
         // Then
         CaseResult.Metric metric = result.getMetric( "CineastsQueriesBenchmark", "Average for: Single path with many start points" );
 
-        assertThat(metric, not(nullValue()));
+        assertThat( metric, not(nullValue()));
         assertThat( metric.calculateAllowedRegression( 0.2 ), is( 12.0 ) );
     }
 
