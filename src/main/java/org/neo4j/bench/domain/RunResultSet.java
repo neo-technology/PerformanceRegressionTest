@@ -81,22 +81,29 @@ public class RunResultSet implements Iterable<RunResult>
         return getHighestValueOf( caseName, metricName, VersionFilter.ANY );
     }
 
+    /**
+     * Returns the top metric for a filtered set of runresults, or null if none is found.
+     * @param caseName
+     * @param metricName
+     * @param filter
+     * @return
+     */
     public Pair<CaseResult.Metric, RunResult> getHighestValueOf( String caseName, String metricName, RunResultFilter filter)
     {
-        CaseResult.Metric highest = null;
-        RunResult bestRun = null;
+        CaseResult.Metric topMetric = null;
+        RunResult runForTopMetric = null;
 
         for(RunResult result : this.filter( filter ))
         {
             CaseResult.Metric current = result.getMetric(caseName, metricName);
-            if(current != null && (highest == null || current.compareTo( highest) < 0))
+            if(current != null && (topMetric == null || current.compareTo( topMetric) < 0))
             {
-                highest = current;
-                bestRun = result;
+                topMetric = current;
+                runForTopMetric = result;
             }
         }
 
-        return Pair.of( highest, bestRun );
+        return Pair.of( topMetric, runForTopMetric );
     }
 
     @Override

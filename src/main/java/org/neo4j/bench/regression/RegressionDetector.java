@@ -59,11 +59,14 @@ public class RegressionDetector
                     Metric bestHistoricValue = resultPair.first();
                     RunResult bestHistoricRun = resultPair.other();
 
-                    if(hasRegressedMoreThanThreshold(currentMetric, bestHistoricValue))
+                    if(bestHistoricValue == null)
                     {
-
+                        System.out.println("Notice: No appropriate runs found for '" + caseResult.getCaseName() + ":" +
+                                currentMetric.getName() + "' to compare regression against. Skipping regression check for this metric.");
+                    }
+                    else if(currentMetric.hasRegressedFrom(bestHistoricValue, threshold))
+                    {
                         // Oh noes! We found a regression :(
-
                         report.add( new Regression(caseResult.getCaseName(), currentMetric.getName(),
                                                    currentRun, bestHistoricRun, threshold) );
                     }
@@ -72,10 +75,5 @@ public class RegressionDetector
         }
 
         return report;
-    }
-
-    private boolean hasRegressedMoreThanThreshold( Metric currentMetric, Metric bestHistoricValue )
-    {
-        return currentMetric.hasRegressedFrom(bestHistoricValue, threshold);
     }
 }
