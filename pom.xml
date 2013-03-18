@@ -96,7 +96,7 @@
                 <available file="databases/cineasts" type="dir"/>
               </not>
               <then>
-                <get src="https://dl.dropbox.com/u/47132/cineasts.tar" dest="target/" />
+                <get src="http://s3.amazonaws.com/example-data.neo4j.org/files/cineasts.tar" dest="target/" />
                 <mkdir dir="databases"/>
                 <untar src="target/cineasts.tar" dest="databases/"/>
               </then>
