@@ -20,6 +20,7 @@
 package org.neo4j.bench;
 
 import java.io.File;
+import java.io.IOException;
 
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
@@ -56,6 +57,8 @@ public class PrepopulatedGraphDatabaseFactory
 
             FileUtils.copyRecursively(new File( dataSet.getLocation() ), location );
 
+            deleteAnyOldUpgradeBackup( location );
+
             return new GraphDatabaseFactory()
                     .newEmbeddedDatabaseBuilder( location.getAbsolutePath() )
                         .setConfig( GraphDatabaseSettings.allow_store_upgrade, "true" )
@@ -63,6 +66,15 @@ public class PrepopulatedGraphDatabaseFactory
         } catch(Exception e)
         {
             throw new RuntimeException( e );
+        }
+    }
+
+    private static void deleteAnyOldUpgradeBackup( File location ) throws IOException
+    {
+        File upgradeBackup = new File( location, "upgrade_backup" );
+        if( upgradeBackup.exists())
+        {
+            FileUtils.deleteRecursively( upgradeBackup );
         }
     }
 
