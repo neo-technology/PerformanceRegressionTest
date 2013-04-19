@@ -23,6 +23,7 @@ import java.io.File;
 
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
+import org.neo4j.graphdb.factory.GraphDatabaseSettings;
 import org.neo4j.kernel.impl.util.FileUtils;
 
 public class PrepopulatedGraphDatabaseFactory
@@ -47,14 +48,18 @@ public class PrepopulatedGraphDatabaseFactory
 
     public static GraphDatabaseService create( DataSet dataSet )
     {
-        try {
+        try
+        {
             File location = File.createTempFile( "perftest", "regression" );
             location.delete();
             location.mkdir();
 
             FileUtils.copyRecursively(new File( dataSet.getLocation() ), location );
 
-            return new GraphDatabaseFactory().newEmbeddedDatabase( location.getAbsolutePath() );
+            return new GraphDatabaseFactory()
+                    .newEmbeddedDatabaseBuilder( location.getAbsolutePath() )
+                        .setConfig( GraphDatabaseSettings.allow_store_upgrade, "true" )
+                        .newGraphDatabase();
         } catch(Exception e)
         {
             throw new RuntimeException( e );
