@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2002-2011 "Neo Technology,"
+ * Copyright (c) 2002-2013 "Neo Technology,"
  * Network Engine for Objects in Lund AB [http://neotechnology.com]
  *
  * This file is part of Neo4j.
@@ -119,7 +119,7 @@ public class MixedLoadBenchCase implements BenchmarkCase
         props.put( GraphDatabaseSettings.use_memory_mapped_buffers.name(), GraphDatabaseSetting.TRUE );
         graphDb = new GraphDatabaseFactory().newEmbeddedDatabaseBuilder( "db" ).
                 setConfig( GraphDatabaseSettings.use_memory_mapped_buffers, GraphDatabaseSetting.TRUE ).
-                loadPropertiesFromFile( "../config.props" ).
+                loadPropertiesFromFile( "config.props" ).
                 newGraphDatabase();
     }
 
@@ -129,6 +129,7 @@ public class MixedLoadBenchCase implements BenchmarkCase
         graphDb.shutdown();
     }
 
+    @Override
     public CaseResult run( )
     {
         Random r = new Random();
