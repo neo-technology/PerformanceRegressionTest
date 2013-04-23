@@ -117,9 +117,18 @@ public class MixedLoadBenchCase implements BenchmarkCase
     {
         Map<String, String> props = new HashMap<String, String>();
         props.put( GraphDatabaseSettings.use_memory_mapped_buffers.name(), GraphDatabaseSetting.TRUE );
-        graphDb = new GraphDatabaseFactory().newEmbeddedDatabaseBuilder( "db" ).
+        String path = "db";
+//        try
+//        {
+//            FileUtils.deleteRecursively( new File( path ) );
+//        }
+//        catch ( IOException e )
+//        {
+//            throw Exceptions.launderedException( e );
+//        }
+        graphDb = new GraphDatabaseFactory().newEmbeddedDatabaseBuilder( path ).
                 setConfig( GraphDatabaseSettings.use_memory_mapped_buffers, GraphDatabaseSetting.TRUE ).
-                loadPropertiesFromFile( "config.props" ).
+                loadPropertiesFromFile( "../config.props" ).
                 newGraphDatabase();
     }
 
