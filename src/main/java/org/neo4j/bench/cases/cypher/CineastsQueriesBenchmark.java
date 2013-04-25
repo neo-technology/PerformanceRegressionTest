@@ -50,14 +50,14 @@ public class CineastsQueriesBenchmark implements BenchmarkCase
     @Override
     public void setUp()
     {
-        this.db = create( PrepopulatedGraphDatabaseFactory.DataSet.CINEASTS );
-        this.cypher = new ExecutionEngine(this.db);
+        db = create( PrepopulatedGraphDatabaseFactory.DataSet.CINEASTS );
+        cypher = new ExecutionEngine(this.db);
     }
 
     @Override
     public void tearDown()
     {
-        this.db.shutdown();
+        db.shutdown();
     }
 
     @Override
