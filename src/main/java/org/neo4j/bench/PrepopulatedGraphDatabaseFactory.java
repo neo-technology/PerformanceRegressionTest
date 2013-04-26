@@ -67,7 +67,7 @@ public class PrepopulatedGraphDatabaseFactory
                     .setConfig( GraphDatabaseSettings.allow_store_upgrade, "true" )
                     .newGraphDatabase();
 
-            return new GraphDatabaseCleanupWrapper( (GraphDatabaseAPI) db, location );
+            return new GraphDatabaseCleanupWrapper( db, location );
         } catch(Exception e)
         {
             throw new RuntimeException( e );
