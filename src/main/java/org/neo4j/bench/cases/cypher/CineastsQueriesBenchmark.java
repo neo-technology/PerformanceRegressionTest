@@ -26,12 +26,12 @@ import static org.neo4j.bench.domain.CaseResult.MetricComparer.SMALLER_IS_BETTER
 import java.util.ArrayList;
 import java.util.Map;
 
+import org.neo4j.bench.GraphDatabaseAndUnderlyingStore;
 import org.neo4j.bench.PrepopulatedGraphDatabaseFactory;
 import org.neo4j.bench.cases.BenchmarkCase;
 import org.neo4j.bench.domain.CaseResult;
 import org.neo4j.bench.domain.Units;
 import org.neo4j.cypher.javacompat.ExecutionEngine;
-import org.neo4j.graphdb.GraphDatabaseService;
 
 public class CineastsQueriesBenchmark implements BenchmarkCase
 {
@@ -42,22 +42,22 @@ public class CineastsQueriesBenchmark implements BenchmarkCase
             "RETURN count(*)";
 
 
-    private GraphDatabaseService db;
+    private GraphDatabaseAndUnderlyingStore dbWithStore;
     private ExecutionEngine cypher;
 
-    private ArrayList<CaseResult.Metric> metrics = new ArrayList<CaseResult.Metric>(  );
+    private ArrayList<CaseResult.Metric> metrics = new ArrayList<CaseResult.Metric>();
 
     @Override
     public void setUp()
     {
-        db = create( PrepopulatedGraphDatabaseFactory.DataSet.CINEASTS );
-        cypher = new ExecutionEngine(this.db);
+        dbWithStore = create( PrepopulatedGraphDatabaseFactory.DataSet.CINEASTS );
+        cypher = new ExecutionEngine( dbWithStore.database );
     }
 
     @Override
     public void tearDown()
     {
-        db.shutdown();
+        dbWithStore.tearDown();
     }
 
     @Override

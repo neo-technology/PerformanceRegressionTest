@@ -27,12 +27,10 @@ import java.io.IOException;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.neo4j.graphdb.factory.GraphDatabaseSettings;
-import org.neo4j.kernel.GraphDatabaseAPI;
 import org.neo4j.kernel.impl.util.FileUtils;
 
 public class PrepopulatedGraphDatabaseFactory
 {
-
     public enum DataSet
     {
         CINEASTS("../databases/cineasts");
@@ -50,7 +48,7 @@ public class PrepopulatedGraphDatabaseFactory
         }
     }
 
-    public static GraphDatabaseService create( DataSet dataSet )
+    public static GraphDatabaseAndUnderlyingStore create( DataSet dataSet )
     {
         try
         {
@@ -67,7 +65,7 @@ public class PrepopulatedGraphDatabaseFactory
                     .setConfig( GraphDatabaseSettings.allow_store_upgrade, "true" )
                     .newGraphDatabase();
 
-            return new GraphDatabaseCleanupWrapper( db, location );
+            return new GraphDatabaseAndUnderlyingStore( db, location );
         } catch(Exception e)
         {
             throw new RuntimeException( e );
